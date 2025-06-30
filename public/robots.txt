@@ -1,0 +1,19 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://vaultivas.com/sitemap.xml
+
+# Disallow admin areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+
+# Allow important pages
+Allow: /
+Allow: /login
+Allow: /register
+Allow: /bills
+Allow: /split
+Allow: /escrow
+Allow: /insights
