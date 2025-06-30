@@ -9,7 +9,10 @@ const Layout: React.FC = () => {
   const location = useLocation();
   
   if (!isAuthenticated) {
-    return <Outlet />;
+    return (<div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <Navbar />
+      <Outlet />
+    </div>);
   }
 
   const showBottomNav = location.pathname !== '/';

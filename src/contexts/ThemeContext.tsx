@@ -17,69 +17,48 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isDark, setIsDark] = useState(false);
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('vaultivas-theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return savedTheme === 'dark' || (!savedTheme && prefersDark);
+    }
+    return false;
+  });
 
   useEffect(() => {
-    // Check for saved theme preference or default to system preference
-    const savedTheme = localStorage.getItem('vaultivas-theme');
-    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
-      setIsDark(true);
-      document.documentElement.classList.add('dark');
-    } else {
-      setIsDark(false);
-      document.documentElement.classList.remove('dark');
-    }
-  }, []);
+    const applyTheme = (dark: boolean) => {
+      const root = document.documentElement;
+      if (dark) {
+        root.classList.add('dark');
+        localStorage.setItem('vaultivas-theme', 'dark');
+      } else {
+        root.classList.remove('dark');
+        localStorage.setItem('vaultivas-theme', 'light');
+      }
+    };
 
-  // Listen for system theme changes
+    applyTheme(isDark);
+  }, [isDark]);
+
+  // Handle system preference changes
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e: MediaQueryListEvent) => {
       if (!localStorage.getItem('vaultivas-theme')) {
         setIsDark(e.matches);
-        if (e.matches) {
-          document.documentElement.classList.add('dark');
-        } else {
-          document.documentElement.classList.remove('dark');
-        }
       }
     };
-
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   const toggleTheme = () => {
-    const newTheme = !isDark;
-    setIsDark(newTheme);
-    
-    if (newTheme) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('vaultivas-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('vaultivas-theme', 'light');
-    }
-
-    // Add smooth transition effect
-    document.documentElement.style.transition = 'background-color 0.3s ease, color 0.3s ease';
-    setTimeout(() => {
-      document.documentElement.style.transition = '';
-    }, 300);
+    setIsDark(prev => !prev);
   };
 
   const setTheme = (theme: 'light' | 'dark') => {
     setIsDark(theme === 'dark');
-    
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('vaultivas-theme', 'dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('vaultivas-theme', 'light');
-    }
   };
 
   return (

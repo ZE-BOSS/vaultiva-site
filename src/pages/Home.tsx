@@ -6,10 +6,6 @@ import {
   Shield, 
   Users, 
   Brain, 
-  Star,
-  ArrowRight,
-  Smartphone,
-  Download,
   CreditCard,
   Gift,
   RefreshCw,
@@ -19,7 +15,8 @@ import {
 } from 'lucide-react';
 import HomeIMG from '../assets/home.avif';
 import SplitBills from '../assets/splitbills.avif';
-import AiInsight from '../assets/aiinsight.avif';
+import Logo from '../assets/logo.avif';
+import WalletSection from '../components/WalletSection';
 
 const Home: React.FC = () => {
   const [heroRef, heroInView] = useInView({ threshold: 0.1, triggerOnce: true });
@@ -102,7 +99,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section ref={heroRef} className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden min-h-screen flex items-center">
+      <section id={'home'} ref={heroRef} className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden min-h-screen flex items-center">
         <div className="absolute inset-0 bg-black/20"></div>
         
         {/* Animated Background Elements */}
@@ -121,12 +118,12 @@ const Home: React.FC = () => {
             >
               <div className="space-y-6">
                 <h1 className="text-4xl md:text-4xl lg:text-5xl font-bold leading-tight">
-                  YOUR{' '}
-                  <span className="bg-gradient-to-r from-cyan-400 to-blue-300 bg-clip-text text-transparent">
-                    VAULT
+                  SECURE YOUR{' '}
+                  <span className="bg-gradient-to-r from-yellow-400 to-orange-300 bg-clip-text text-transparent">
+                    BILLS
                   </span>
-                  {' '}FOR PAYMENT
-                  <span className="text-3xl md:text-4xl lg:text-5xl"> & TRUST</span>
+                  {' '}eMPOWER YOUR
+                  <span className="text-3xl md:text-4xl lg:text-5xl bg-gradient-to-r from-cyan-400 to-blue-300 bg-clip-text text-transparent"> WALLET</span>
                 </h1>
                 
                 <p className="text-xl md:text-xl text-blue-100 leading-relaxed max-w-2xl">
@@ -135,22 +132,50 @@ const Home: React.FC = () => {
                 </p>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-4 pt-5">
-                <Link
-                  to="/register"
-                  className="inline-flex items-center justify-center px-8 py-2 text-md font-semibold text-blue-600 bg-white rounded-2xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 shadow-xl"
+              {/* Download Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                {/* App Store Button */}
+                <a
+                  href="#"
+                  className="inline-flex items-center px-4 py-2 rounded-lg shadow-md border transition-all duration-300
+                            bg-white text-black border-gray-200 hover:bg-gray-100
+                            dark:bg-black dark:text-white dark:border-white/20 dark:hover:bg-gray-900"
                 >
-                  Get Started
-                  <ArrowRight className="ml-2 w-5 h-4" />
-                </Link>
-                
-                <Link
-                  to="/login"
-                  className="inline-flex items-center justify-center px-8 py-4 text-md font-semibold text-white border-2 border-white/30 rounded-2xl hover:bg-white/10 transition-all duration-300 backdrop-blur-sm"
+                  <img
+                    src="data:image/png;base64,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"
+                    alt="iOS"
+                    className="w-6 h-6 mr-3 dark:hidden"
+                  />
+                  <img
+                    src="data:image/png;base64,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"
+                    alt="iOS (Dark)"
+                    className="w-6 h-6 mr-3 hidden dark:block"
+                  />
+                  <div className="text-left leading-tight text-sm">
+                    <span className="block text-gray-600 text-xs dark:text-white/60">Download on the</span>
+                    <span className="font-semibold">App Store</span>
+                  </div>
+                </a>
+
+                {/* Google Play Button */}
+                <a
+                  href="#"
+                  className="inline-flex items-center px-4 py-2 rounded-lg shadow-md border transition-all duration-300
+                            bg-white text-black border-gray-200 hover:bg-gray-100
+                            dark:bg-black dark:text-white dark:border-white/20 dark:hover:bg-gray-900"
                 >
-                  Login
-                </Link>
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Google_Play_Arrow_logo.svg/512px-Google_Play_Arrow_logo.svg.png"
+                    alt="Android"
+                    className="w-6 h-6 mr-3"
+                  />
+                  <div className="text-left leading-tight text-sm">
+                    <span className="block text-gray-600 text-xs dark:text-white/60">GET IT ON</span>
+                    <span className="font-semibold">Google Play</span>
+                  </div>
+                </a>
               </div>
+
 
               {/* Stats */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-5">
@@ -177,7 +202,7 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, x: 50 }}
               animate={heroInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative"
+              className="relative mt-10"
             >
               <div className="relative z-10">
                 <img
@@ -196,7 +221,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section ref={featuresRef} className="py-20 bg-white dark:bg-gray-900">
+      <section id={'features'} ref={featuresRef} className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -244,7 +269,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Split Bills Section */}
-      <section className="py-20 bg-gray-900 text-white">
+      <section id={'splittingbills'} className="py-20 bg-gray-900 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <motion.h2
@@ -330,69 +355,10 @@ const Home: React.FC = () => {
       </section>
 
       {/* Multiple Wallet System */}
-      <section className="py-20 bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
-              Multiple Wallet System
-            </h2>
-            <p className="text-xl text-gray-300 max-w-4xl mx-auto">
-              Switch between personal, group, or business wallets — no mix-ups, no stress. 
-              Keep your bills organized, your squad contributions separate, and your budget on point.
-            </p>
-          </motion.div>
-          
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="flex justify-center items-center space-x-8 mb-8">
-              <button className="w-12 h-12 border border-gray-600 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors">
-                <ArrowRight className="w-5 h-5 rotate-180" />
-              </button>
-              <button className="w-12 h-12 border border-gray-600 rounded-full flex items-center justify-center hover:bg-gray-800 transition-colors">
-                <ArrowRight className="w-5 h-5" />
-              </button>
-            </div>
-            
-            <div className="relative max-w-sm mx-auto">
-              <img
-                src={AiInsight}
-                alt="Multiple Wallet System"
-                className="rounded-3xl shadow-2xl w-full"
-                loading="lazy"
-              />
-              
-              {/* Floating Wallet Cards */}
-              <div className="absolute -left-20 top-1/2 transform -translate-y-1/2">
-                <div className="bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl p-4 w-48 shadow-xl">
-                  <div className="text-sm opacity-80 mb-1">Escrow balance</div>
-                  <div className="text-2xl font-bold">₦300,600.00</div>
-                </div>
-              </div>
-              
-              <div className="absolute -right-20 top-1/2 transform -translate-y-1/2">
-                <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl p-4 w-48 shadow-xl">
-                  <div className="text-sm opacity-80 mb-1">Active balance</div>
-                  <div className="text-2xl font-bold">****</div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
+      <WalletSection />
 
       {/* How It Works Section */}
-      <section ref={howItWorksRef} className="py-20 bg-gray-50 dark:bg-gray-800">
+      <section id={'how-it-works'} ref={howItWorksRef} className="py-20 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -443,113 +409,8 @@ const Home: React.FC = () => {
         </div>
       </section>
 
-      {/* Testimonial Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="max-w-4xl mx-auto text-center"
-          >
-            <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-12 border border-white/20">
-              <div className="flex justify-center mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
-                ))}
-              </div>
-              
-              <blockquote className="text-2xl md:text-3xl font-medium mb-8 leading-relaxed">
-                "The escrow feature is a game-changer. It's exactly what we need and gives us peace of mind. Highly recommend!"
-              </blockquote>
-              
-              <div className="flex items-center justify-center space-x-4">
-                <img
-                  src="https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2"
-                  alt="Sarah A."
-                  className="w-16 h-16 rounded-full object-cover border-2 border-white/20"
-                  loading="lazy"
-                />
-                <div className="text-left">
-                  <div className="font-semibold text-lg">Sarah A.</div>
-                  <div className="text-blue-200">Verified User</div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Download Section */}
-      <section className="py-20 bg-gray-900 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-            >
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
-                Secure Your Bills,{' '}
-                <span className="bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                  Empower Your Wallet
-                </span>
-              </h2>
-              
-              <p className="text-xl text-gray-300 mb-8 leading-relaxed">
-                Pay bills, split costs, and run escrow transactions seamlessly. 
-                AutoSmart Refill and AI Spending Insights keep you in control.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <a
-                  href="#"
-                  className="inline-flex items-center justify-center px-6 py-3 bg-black rounded-xl hover:bg-gray-800 transition-colors"
-                  aria-label="Download on Google Play"
-                >
-                  <Download className="w-6 h-6 mr-3" />
-                  <div className="text-left">
-                    <div className="text-xs text-gray-400">GET IT ON</div>
-                    <div className="text-sm font-semibold">Google Play</div>
-                  </div>
-                </a>
-                
-                <a
-                  href="#"
-                  className="inline-flex items-center justify-center px-6 py-3 bg-black rounded-xl hover:bg-gray-800 transition-colors"
-                  aria-label="Download on App Store"
-                >
-                  <Smartphone className="w-6 h-6 mr-3" />
-                  <div className="text-left">
-                    <div className="text-xs text-gray-400">Download on the</div>
-                    <div className="text-sm font-semibold">App Store</div>
-                  </div>
-                </a>
-              </div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <img
-                src="https://images.pexels.com/photos/5717456/pexels-photo-5717456.jpeg?auto=compress&cs=tinysrgb&w=600&h=800&dpr=2"
-                alt="Vaultivas Mobile App"
-                className="rounded-3xl shadow-2xl w-full max-w-md mx-auto"
-                loading="lazy"
-              />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
       {/* FAQ Section */}
-      <section className="py-20 bg-gray-900 text-white">
+      <section id={'FAQs'} className="py-20 bg-gray-900 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -606,13 +467,22 @@ const Home: React.FC = () => {
       <footer className="bg-gray-900 text-white py-16 border-t border-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold">
-                  V
+            <div className=''>
+              <Link to="/" className="flex items-center space-x-2 group mb-5">
+                <motion.img 
+                  src={Logo}
+                  whileHover={{ scale: 1.05, rotate: 5 }}
+                  className="w-10 h-12  flex items-center justify-center text-white font-bold"
+                />
+                <div>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400 group-hover:text-blue-800 dark:group-hover:text-blue-600 transition-colors">
+                    Vaultiva {'\n'} 
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-white group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
+                    Your vault for payment & trust
+                  </p>
                 </div>
-                <span className="text-xl font-bold">Vaultivas</span>
-              </div>
+              </Link>
               <p className="text-gray-400 mb-4">
                 Your trusted partner for secure payments, bill management, and financial control.
               </p>
