@@ -129,7 +129,7 @@ const Navbar: React.FC = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleTheme}
-                className="p-2 rounded-xl ml-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group"
+                className="p-2 rounded-xl ml-4 hidden md:inline-block hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group"
                 aria-label="Toggle theme"
               >
                 <motion.div
@@ -148,14 +148,14 @@ const Navbar: React.FC = () => {
               {/* Auth Buttons */}
               <RouterLink
                 to="/login"
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                className="px-4 py-2 hidden md:inline-block text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
               >
                 Sign In
               </RouterLink>
               
               <RouterLink
                 to="/register"
-                className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                className="px-6 py-2 text-sm hidden md:inline-block font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
               >
                 Get Started
               </RouterLink>
@@ -206,6 +206,48 @@ const Navbar: React.FC = () => {
                       </RouterLink>
                     );
                   })}
+
+                  <div className="space-y-2">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={toggleTheme}
+                      className="p-2 rounded-xl flex gap-4 items-center mb-4 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-300 group"
+                      aria-label="Toggle theme"
+                    >
+                      <motion.div
+                        initial={false}
+                        animate={{ rotate: isDark ? 180 : 0 }}
+                        transition={{ duration: 0.5, ease: "easeInOut" }}
+                      >
+                        {isDark ? (
+                          <Sun className="w-5 h-5 text-yellow-500 group-hover:text-yellow-400" /> 
+                        ) : (
+                          <Moon className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
+                        )}
+                      </motion.div>
+                      {isDark ? (
+                        <p className='font-bold text-white'> Switch to Light Mode</p>
+                      ) : (
+                        <p className='font-bold text-gray-700'> Switch to Dark Mode</p>
+                      )}
+                    </motion.button>
+                    
+                    {/* Auth Buttons */}
+                    <RouterLink
+                      to="/login"
+                      className="px-4 py-2 border rounded-xl mr-4 border-blue-600 text-sm font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                    >
+                      Sign In
+                    </RouterLink>
+                    
+                    <RouterLink
+                      to="/register"
+                      className="px-6 py-2 text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    >
+                      Get Started
+                    </RouterLink>
+                  </div>
                 </div>
               </motion.div>
             )}

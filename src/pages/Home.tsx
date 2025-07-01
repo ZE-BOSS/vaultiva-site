@@ -99,7 +99,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section id={'home'} ref={heroRef} className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden min-h-screen flex items-center">
+      <section id={'home'} ref={heroRef} className="relative pt-32 md:pt-10 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden min-h-screen flex items-center">
         <div className="absolute inset-0 bg-black/20"></div>
         
         {/* Animated Background Elements */}
@@ -122,7 +122,7 @@ const Home: React.FC = () => {
                   <span className="bg-gradient-to-r from-yellow-400 to-orange-300 bg-clip-text text-transparent">
                     BILLS
                   </span>
-                  {' '}eMPOWER YOUR
+                  {' '}EMPOWER YOUR
                   <span className="text-3xl md:text-4xl lg:text-5xl bg-gradient-to-r from-cyan-400 to-blue-300 bg-clip-text text-transparent"> WALLET</span>
                 </h1>
                 
@@ -133,7 +133,7 @@ const Home: React.FC = () => {
               </div>
               
               {/* Download Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 pt-4">
+              <div className="flex flex-row gap-4 pt-4">
                 {/* App Store Button */}
                 <a
                   href="#"
@@ -202,7 +202,7 @@ const Home: React.FC = () => {
               initial={{ opacity: 0, x: 50 }}
               animate={heroInView ? { opacity: 1, x: 0 } : {}}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative mt-10"
+              className="relative"
             >
               <div className="relative z-10">
                 <img

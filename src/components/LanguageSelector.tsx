@@ -31,7 +31,7 @@ const LanguageSelector: React.FC<Props> = ({ languages }) => {
   };
 
   return (
-    <div ref={dropdownRef} className="relative inline-block text-left w-36">
+    <div ref={dropdownRef} className="relative hidden md:inline-block text-left w-36">
       <button
         onClick={() => setIsOpen((prev) => !prev)}
         className="w-full flex items-center justify-between px-3 py-2 border border-gray-400 rounded-lg bg-transparent shadow-sm"
