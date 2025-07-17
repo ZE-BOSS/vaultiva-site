@@ -28,43 +28,43 @@ const Home: React.FC = () => {
       title: "Smart Escrow",
       description: "Hold funds securely until all parties meet their obligations.",
       icon: ShieldCheckIcon,
-      gradient: "from-white to-[#fecaca]", // Light blue blend
-      iconColor: "bg-red-400"
+      gradient: "from-white to-[#fecaca] dark:from-gray-900 dark:to-red-900",
+      iconColor: "bg-red-400 dark:bg-red-600"
     },
     {
       title: "Split Payments",
       description: "Easily split bills between friends and track contributions.",
       icon: UsersIcon,
-      gradient: "from-white to-[#bfdbfe]", // Soft yellow blend
-      iconColor: "bg-blue-400"
+      gradient: "from-white to-[#bfdbfe] dark:from-gray-900 dark:to-blue-900",
+      iconColor: "bg-blue-400 dark:bg-blue-600"
     },
     {
       title: "Multi-Wallets",
       description: "Organize your finances across different goals and wallets.",
       icon: WalletIcon,
-      gradient: "from-white to-[#fed7aa]", // Soft green blend
-      iconColor: "bg-orange-400"
+      gradient: "from-white to-[#fed7aa] dark:from-gray-900 dark:to-orange-900",
+      iconColor: "bg-orange-400 dark:bg-orange-600"
     },
     {
       title: "Schedule Payments",
       description: "Never miss a payment. Set it and forget it.",
       icon: ClockIcon,
-      gradient: "from-white to-[#e9d5ff]", // Orange-yellow blend
-      iconColor: "bg-purple-400"
+      gradient: "from-white to-[#e9d5ff] dark:from-gray-900 dark:to-purple-900",
+      iconColor: "bg-purple-400 dark:bg-purple-600"
     },
     {
       title: "Activity Logs",
       description: "Track every transaction with detailed logs and filters.",
       icon: ClipboardIcon,
-      gradient: "from-white to-[#fef9c3]", // Sky-light blend
-      iconColor: "bg-yellow-400"
+      gradient: "from-white to-[#fef9c3] dark:from-gray-900 dark:to-yellow-900",
+      iconColor: "bg-yellow-400 dark:bg-yellow-600"
     },
     {
       title: "Secure Login",
       description: "Login with multi-factor authentication and biometrics.",
       icon: LockKeyholeIcon,
-      gradient: "from-white to-[#bbf7d0]", // Bright yellow blend
-      iconColor: "bg-green-400"
+      gradient: "from-white to-[#bbf7d0] dark:from-gray-900 dark:to-green-900",
+      iconColor: "bg-green-400 dark:bg-green-600"
     },
   ];
 
