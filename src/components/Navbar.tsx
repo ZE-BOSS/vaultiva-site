@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { Link as ScrollLink } from 'react-scroll';
-import { Bell, Moon, Sun, User, LogOut, Menu, X, Home, Briefcase, LayoutGrid, Wallet, HelpCircle } from 'lucide-react';
+import { Bell, Moon, Sun, User, LogOut, Menu, X, Home, Briefcase, LayoutGrid, Wallet, HelpCircle, Shield, FileText, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -59,6 +59,9 @@ const Navbar: React.FC = () => {
     { to: 'wallets', label: 'Wallet', icon: Wallet },
     { to: 'how-it-works', label: 'How It Works', icon: HelpCircle },
     { to: 'FAQs', label: 'FAQs', icon: HelpCircle },
+    { to: 'privacy-policy', label: 'Privacy Policy', icon: Shield, isRoute: true },
+    { to: 'terms-and-conditions', label: 'Terms & Conditions', icon: FileText, isRoute: true },
+    { to: 'refund-policy', label: 'Refund Policy', icon: RefreshCw, isRoute: true },
   ];
 
   const authenticatedNavItems = [
@@ -98,42 +101,25 @@ const Navbar: React.FC = () => {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-2">
               {navItems.map((item) => {
-                if (item.isRoute) {
-                  return (
-                    <RouterLink
-                      key={item.to}
-                      to={`/${item.to}`}
-                      className={`flex items-center py-2 px-4 rounded-lg text-sm font-medium cursor-pointer transition-all duration-300 ${
-                        location.pathname === `/${item.to}`
-                          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <item.icon className="w-4 h-4 mr-2" />
-                      <span>{item.label}</span>
-                    </RouterLink>
-                  );
-                } else {
-                  return (
-                    <ScrollLink
-                      key={item.to}
-                      to={item.to}
-                      smooth={true}
-                      duration={500}
-                      offset={-80} // Adjust if your navbar is fixed height
-                      spy={true}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className={`flex items-center py-2 px-4 rounded-lg text-sm font-medium cursor-pointer transition-all duration-300 ${
-                        location.hash === `#${item.to}`
-                          ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50'
-                          : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
-                      }`}
-                    >
-                      <item.icon className="w-4 h-4 mr-2" />
-                      <span>{item.label}</span>
-                    </ScrollLink>
-                  );
-                }
+                return (
+                  <ScrollLink
+                    key={item.to}
+                    to={item.to}
+                    smooth={true}
+                    duration={500}
+                    offset={-80} // Adjust if your navbar is fixed height
+                    spy={true}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center py-2 rounded-lg text-sm font-medium cursor-pointer transition-all duration-300 ${
+                      location.hash === `#${item.to}`
+                        ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50'
+                        : 'text-gray-600 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-50 dark:hover:bg-gray-800'
+                    }`}
+                  >
+                    <item.icon className="w-4 h-4 mr-2" />
+                    <span>{item.label}</span>
+                  </ScrollLink>
+                );
               })}
             </div>
             
