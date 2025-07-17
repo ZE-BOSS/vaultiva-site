@@ -2,16 +2,16 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { 
-  Shield, 
-  Users, 
-  Brain, 
-  CreditCard,
-  Gift,
-  RefreshCw,
+import {
+  ShieldCheckIcon,
+  UsersIcon,
+  WalletIcon,
+  ClockIcon,
+  ClipboardIcon,
+  LockKeyholeIcon,
   Lock,
   UserCheck,
-  Award
+  Award,
 } from 'lucide-react';
 import HomeIMG from '../assets/home.avif';
 import SplitBills from '../assets/splitbills.avif';
@@ -25,48 +25,49 @@ const Home: React.FC = () => {
 
   const features = [
     {
-      icon: RefreshCw,
-      title: 'Auto Refill',
-      description: 'Never run out again. Set your bills to auto-refill and we\'ll top up your essentials automatically — no reminders needed.',
-      color: 'from-yellow-400 to-orange-500',
-      bgColor: 'bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20'
+      title: "Smart Escrow",
+      description: "Hold funds securely until all parties meet their obligations.",
+      icon: ShieldCheckIcon,
+      gradient: "from-white to-[#fecaca]", // Light blue blend
+      iconColor: "bg-red-400"
     },
     {
-      icon: Shield,
-      title: 'Escrow Payment',
-      description: 'Protect your money with smart escrow. Funds are only released when both sides are satisfied. Peace of mind built in.',
-      color: 'from-blue-500 to-cyan-500',
-      bgColor: 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20'
+      title: "Split Payments",
+      description: "Easily split bills between friends and track contributions.",
+      icon: UsersIcon,
+      gradient: "from-white to-[#bfdbfe]", // Soft yellow blend
+      iconColor: "bg-blue-400"
     },
     {
-      icon: CreditCard,
-      title: 'Bill Payment',
-      description: 'Pay electricity, airtime, internet, and TV subscriptions in seconds — fast, secure, and always available.',
-      color: 'from-green-500 to-emerald-500',
-      bgColor: 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20'
+      title: "Multi-Wallets",
+      description: "Organize your finances across different goals and wallets.",
+      icon: WalletIcon,
+      gradient: "from-white to-[#fed7aa]", // Soft green blend
+      iconColor: "bg-orange-400"
     },
     {
-      icon: Gift,
-      title: 'Rewards',
-      description: 'Get rewarded for paying your bills. Earn points and unlock rewards every time you top up.',
-      color: 'from-purple-500 to-pink-500',
-      bgColor: 'bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20'
+      title: "Schedule Payments",
+      description: "Never miss a payment. Set it and forget it.",
+      icon: ClockIcon,
+      gradient: "from-white to-[#e9d5ff]", // Orange-yellow blend
+      iconColor: "bg-purple-400"
     },
     {
-      icon: Users,
-      title: 'Bill Splitting',
-      description: 'Split bills with friends, roommates, or family. Everyone pays their fair share without the hassle.',
-      color: 'from-indigo-500 to-purple-500',
-      bgColor: 'bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20'
+      title: "Activity Logs",
+      description: "Track every transaction with detailed logs and filters.",
+      icon: ClipboardIcon,
+      gradient: "from-white to-[#fef9c3]", // Sky-light blend
+      iconColor: "bg-yellow-400"
     },
     {
-      icon: Brain,
-      title: 'AI Insights',
-      description: 'Know your spending habits. Get smart tips and predictions. Your money, your control.',
-      color: 'from-pink-500 to-rose-500',
-      bgColor: 'bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20'
-    }
+      title: "Secure Login",
+      description: "Login with multi-factor authentication and biometrics.",
+      icon: LockKeyholeIcon,
+      gradient: "from-white to-[#bbf7d0]", // Bright yellow blend
+      iconColor: "bg-green-400"
+    },
   ];
+
 
   const steps = [
     {
@@ -99,7 +100,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section id={'home'} ref={heroRef} className="relative pt-32 md:pt-10 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden min-h-screen flex items-center">
+      <section id={'home'} ref={heroRef} className="relative pt-32 md:pt-10 text-white overflow-hidden min-h-screen flex items-center" style={{ background: 'linear-gradient(0deg, #cfe6ff -21%, #002a7d)' }}>
         <div className="absolute inset-0 bg-black/20"></div>
         
         {/* Animated Background Elements */}
@@ -221,25 +222,32 @@ const Home: React.FC = () => {
       </section>
 
       {/* Features Section */}
-      <section id={'features'} ref={featuresRef} className="py-20 bg-white dark:bg-gray-900">
+      <section
+        id="features"
+        ref={featuresRef}
+        className="py-24 bg-[#f9fbff] dark:bg-[#0f172a]"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             animate={featuresInView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center mb-20"
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
-              Why Choose <span className="text-blue-600">Vaultivas</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-[#1e3a8a] dark:text-[#cfe6ff] mb-4">
+              Why Choose <span className="text-sky-600">Vaultiva</span>
             </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Experience the future of financial management with our comprehensive suite of tools designed for modern living.
+            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Smart finance made simple. Enjoy seamless escrow, bill split, and secure wallet services all in one place.
             </p>
           </motion.div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
             {features.map((feature, index) => {
               const Icon = feature.icon;
+              const gradient = feature.gradient; // Example: "from-white to-[#fef9c3]"
+              const iconBg = feature.iconColor; // Example: "bg-sky-300" or "bg-green-200"
+              
               return (
                 <motion.div
                   key={index}
@@ -248,16 +256,15 @@ const Home: React.FC = () => {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className="group"
                 >
-                  <div className={`${feature.bgColor} rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-700 h-full`}>
-                    <div className={`w-16 h-16 bg-gradient-to-r ${feature.color} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                  <div className={`rounded-3xl p-8 bg-gradient-to-br ${gradient} shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-[#e5e7eb] dark:border-[#1f2b46] h-full`}>
+                    <div className={`w-16 h-16 ${iconBg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                       <Icon className="w-8 h-8 text-white" />
                     </div>
-                    
-                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+
+                    <h3 className="text-xl font-semibold text-[#1e3a8a] dark:text-white mb-3">
                       {feature.title}
                     </h3>
-                    
-                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
+                    <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -269,7 +276,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Split Bills Section */}
-      <section id={'splittingbills'} className="py-20 bg-gray-900 text-white">
+      <section id={'splittingbills'} className="py-20 text-white" style={{ backgroundColor: '#142352' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <motion.h2
@@ -410,7 +417,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* FAQ Section */}
-      <section id={'FAQs'} className="py-20 bg-gray-900 text-white">
+      <section id={'FAQs'} className="py-20 bg-[#142352] text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -430,7 +437,7 @@ const Home: React.FC = () => {
             viewport={{ once: true }}
             className="space-y-6"
           >
-            <details className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <details className="bg-[#142352] rounded-2xl p-6 border border-gray-700">
               <summary className="font-semibold text-lg cursor-pointer hover:text-blue-400 transition-colors">
                 What is Vaultivas?
               </summary>
@@ -440,7 +447,7 @@ const Home: React.FC = () => {
               </p>
             </details>
             
-            <details className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <details className="bg-[#142352] rounded-2xl p-6 border border-gray-700">
               <summary className="font-semibold text-lg cursor-pointer hover:text-blue-400 transition-colors">
                 How does the escrow system work?
               </summary>
@@ -450,7 +457,7 @@ const Home: React.FC = () => {
               </p>
             </details>
             
-            <details className="bg-gray-800 rounded-2xl p-6 border border-gray-700">
+            <details className="bg-[#142352] rounded-2xl p-6 border border-gray-700">
               <summary className="font-semibold text-lg cursor-pointer hover:text-blue-400 transition-colors">
                 Is my money safe with Vaultivas?
               </summary>
@@ -464,7 +471,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16 border-t border-gray-800">
+      <footer className="bg-[#142352] text-white py-16 border-t border-[#142352">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className=''>
@@ -511,10 +518,9 @@ const Home: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Support</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Help Center</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Contact Us</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terms of Service</a></li>
+                <li><Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link></li>
+                <li><Link to="/refund-policy" className="text-gray-400 hover:text-white transition-colors">Refund Policy</Link></li>
               </ul>
             </div>
           </div>

@@ -8,9 +8,7 @@ import {
   Copy,
   CheckCircle,
   Clock,
-  DollarSign
 } from 'lucide-react';
-import { useWallet } from '../contexts/WalletContext';
 
 interface SplitBill {
   id: string;
@@ -32,7 +30,6 @@ interface Participant {
 }
 
 const BillSplitting: React.FC = () => {
-  const { addTransaction } = useWallet();
   const [activeTab, setActiveTab] = useState<'create' | 'history'>('create');
   const [billTitle, setBillTitle] = useState('');
   const [totalAmount, setTotalAmount] = useState<string>('');
