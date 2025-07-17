@@ -90,7 +90,7 @@ export default function WalletSection() {
   );
 
   return (
-    <section id="wallets" className="relative py-24 bg-[#050D26] text-white overflow-hidden">
+    <section id="wallets" className="relative py-24 text-white overflow-hidden" style={{ backgroundColor: '#142352' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {/* Header */}

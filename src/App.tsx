@@ -16,6 +16,9 @@ import AIInsights from './pages/AIInsights';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/TermsAndConditions';
+import RefundPolicy from './pages/RefundPolicy';
 import BankingInstructions from './pages/BankingInstructions';
 
 function App() {
@@ -30,6 +33,9 @@ function App() {
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
+                    <Route path="/refund-policy" element={<RefundPolicy />} />
                     <Route path="/banking-instructions" element={<BankingInstructions />} />
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Home />} />

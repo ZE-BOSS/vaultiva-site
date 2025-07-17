@@ -2,7 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
-import { 
+import {
+  Shield,
+  Users,
+  Brain,
+  CreditCard,
+  Gift,
+  RefreshCw,
+  Lock,
+  UserCheck,
+  Award,
+  FileText
+} from 'lucide-react';
+import {
   Shield, 
   Users, 
   Brain, 
@@ -99,7 +111,7 @@ const Home: React.FC = () => {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section id={'home'} ref={heroRef} className="relative pt-32 md:pt-10 bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 text-white overflow-hidden min-h-screen flex items-center">
+      <section id={'home'} ref={heroRef} className="relative pt-32 md:pt-10 text-white overflow-hidden min-h-screen flex items-center" style={{ background: 'linear-gradient(0deg, #cfe6ff -21%, #002a7d)' }}>
         <div className="absolute inset-0 bg-black/20"></div>
         
         {/* Animated Background Elements */}
@@ -269,7 +281,7 @@ const Home: React.FC = () => {
       </section>
 
       {/* Split Bills Section */}
-      <section id={'splittingbills'} className="py-20 bg-gray-900 text-white">
+      <section id={'splittingbills'} className="py-20 text-white" style={{ backgroundColor: '#142352' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <motion.h2
@@ -505,6 +517,9 @@ const Home: React.FC = () => {
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Press</a></li>
                 <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
+                <li><Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link></li>
+                <li><Link to="/refund-policy" className="text-gray-400 hover:text-white transition-colors">Refund Policy</Link></li>
               </ul>
             </div>
             
