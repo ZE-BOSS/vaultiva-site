@@ -3,13 +3,13 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import {
-  ShieldCheckIcon,
+  // ShieldCheckIcon,
   UsersIcon,
   WalletIcon,
   ClockIcon,
   ClipboardIcon,
   LockKeyholeIcon,
-  Lock,
+  // Lock,
   UserCheck,
   Award,
 } from 'lucide-react';
@@ -24,13 +24,13 @@ const Home: React.FC = () => {
   const [howItWorksRef, howItWorksInView] = useInView({ threshold: 0.1, triggerOnce: true });
 
   const features = [
-    {
-      title: "Smart Escrow",
-      description: "Hold funds securely until all parties meet their obligations.",
-      icon: ShieldCheckIcon,
-      gradient: "from-white to-[#fecaca] dark:from-gray-900 dark:to-red-900",
-      iconColor: "bg-red-400 dark:bg-red-600"
-    },
+    // {
+    //   title: "Smart Escrow",
+    //   description: "Hold funds securely until all parties meet their obligations.",
+    //   icon: ShieldCheckIcon,
+    //   gradient: "from-white to-[#fecaca] dark:from-gray-900 dark:to-red-900",
+    //   iconColor: "bg-red-400 dark:bg-red-600"
+    // },
     {
       title: "Split Payments",
       description: "Easily split bills between friends and track contributions.",
@@ -76,12 +76,12 @@ const Home: React.FC = () => {
       description: 'Create your account in minutes with secure verification and start managing your finances immediately.',
       color: 'from-blue-500 to-indigo-600'
     },
-    {
-      icon: Lock,
-      title: 'Pay Bills & Set Escrow',
-      description: 'Pay your bills instantly or set up secure escrow transactions for safe online purchases and services.',
-      color: 'from-purple-500 to-pink-500'
-    },
+    // {
+    //   icon: Lock,
+    //   title: 'Pay Bills & Set Escrow',
+    //   description: 'Pay your bills instantly or set up secure escrow transactions for safe online purchases and services.',
+    //   color: 'from-purple-500 to-pink-500'
+    // },
     {
       icon: Award,
       title: 'Relax & Earn',
@@ -447,7 +447,7 @@ const Home: React.FC = () => {
               </p>
             </details>
             
-            <details className="bg-[#142352] rounded-2xl p-6 border border-gray-700">
+            {/* <details className="bg-[#142352] rounded-2xl p-6 border border-gray-700">
               <summary className="font-semibold text-lg cursor-pointer hover:text-blue-400 transition-colors">
                 How does the escrow system work?
               </summary>
@@ -455,7 +455,7 @@ const Home: React.FC = () => {
                 Our escrow system holds funds securely until both parties fulfill their obligations. 
                 Money is only released when the buyer confirms receipt of goods or services, ensuring protection for both parties.
               </p>
-            </details>
+            </details> */}
             
             <details className="bg-[#142352] rounded-2xl p-6 border border-gray-700">
               <summary className="font-semibold text-lg cursor-pointer hover:text-blue-400 transition-colors">
@@ -500,7 +500,7 @@ const Home: React.FC = () => {
               <ul className="space-y-2">
                 <li><Link to="/bills" className="text-gray-400 hover:text-white transition-colors">Pay Bills</Link></li>
                 <li><Link to="/split" className="text-gray-400 hover:text-white transition-colors">Split Bills</Link></li>
-                <li><Link to="/escrow" className="text-gray-400 hover:text-white transition-colors">Escrow</Link></li>
+                {/* <li><Link to="/escrow" className="text-gray-400 hover:text-white transition-colors">Escrow</Link></li> */}
                 <li><Link to="/insights" className="text-gray-400 hover:text-white transition-colors">AI Insights</Link></li>
               </ul>
             </div>

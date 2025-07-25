@@ -70,13 +70,13 @@ const Dashboard: React.FC = () => {
       color: 'from-green-500 to-emerald-500',
       link: '/split'
     },
-    {
-      icon: Shield,
-      title: 'Escrow',
-      description: 'Secure transactions',
-      color: 'from-purple-500 to-pink-500',
-      link: '/escrow'
-    },
+    // {
+    //   icon: Shield,
+    //   title: 'Escrow',
+    //   description: 'Secure transactions',
+    //   color: 'from-purple-500 to-pink-500',
+    //   link: '/escrow'
+    // },
     {
       icon: TrendingUp,
       title: 'AI Insights',

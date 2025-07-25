@@ -71,15 +71,15 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       color: 'bg-gradient-to-r from-purple-500 to-pink-500',
       icon: 'briefcase'
     },
-    {
-      id: '4',
-      name: 'Escrow Wallet',
-      type: 'escrow',
-      balance: 1200000.00,
-      currency: 'NGN',
-      color: 'bg-gradient-to-r from-orange-500 to-red-500',
-      icon: 'shield'
-    }
+    // {
+    //   id: '4',
+    //   name: 'Escrow Wallet',
+    //   type: 'escrow',
+    //   balance: 1200000.00,
+    //   currency: 'NGN',
+    //   color: 'bg-gradient-to-r from-orange-500 to-red-500',
+    //   icon: 'shield'
+    // }
   ]);
 
   const [transactions, setTransactions] = useState<Transaction[]>([
