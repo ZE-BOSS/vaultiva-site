@@ -9,10 +9,10 @@ export const usePerformanceMonitor = () => {
           console.log('LCP:', entry.startTime);
         }
         if (entry.entryType === 'first-input') {
-          console.log('FID:', entry.processingStart - entry.startTime);
+          console.log('FID:', (entry as PerformanceEventTiming).processingStart - entry.startTime);
         }
         if (entry.entryType === 'layout-shift') {
-          console.log('CLS:', entry.value);
+          console.log('CLS:', (entry as PerformanceEntry & { value: number }).value);
         }
       });
     });

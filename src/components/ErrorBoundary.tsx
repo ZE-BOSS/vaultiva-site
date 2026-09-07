@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw } from 'lucide-react';
 
 interface Props {
@@ -23,7 +23,7 @@ class ErrorBoundary extends Component<Props, State> {
     console.error('Uncaught error:', error, errorInfo);
     
     // Log to error reporting service
-    if (process.env.NODE_ENV === 'production') {
+    if (import.meta.env.PROD) {
       // Send to error tracking service
       this.logErrorToService(error, errorInfo);
     }
@@ -63,7 +63,7 @@ class ErrorBoundary extends Component<Props, State> {
               <span>Try Again</span>
             </button>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="mt-6 text-left">
                 <summary className="cursor-pointer text-sm text-gray-500">
                   Error Details (Development)

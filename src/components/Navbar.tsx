@@ -5,6 +5,7 @@ import { Bell, Moon, Sun, User, LogOut, Menu, X, Home, Briefcase, LayoutGrid, Wa
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
+import { displayName, initials } from '../api';
 import { useNotifications } from '../contexts/NotificationContext';
 import Logo from '../assets/logo.avif';
 import LanguageSelector from './LanguageSelector';
@@ -65,6 +66,7 @@ const Navbar: React.FC = () => {
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/wallets', label: 'Wallets' },
     { path: '/bills', label: 'Pay Bills' },
+    { path: '/escrow', label: 'Escrow' },
     { path: '/insights', label: 'AI Insights' }
   ];
 
@@ -190,39 +192,25 @@ const Navbar: React.FC = () => {
                 <div className="space-y-2">
                   {navItems.map((item) => {
                     const Icon = item.icon;
-                    if (item.isRoute) {
-                      return (
-                        <RouterLink
-                          key={item.to}
-                          to={`/${item.to}`}
-                          onClick={() => setIsMobileMenuOpen(false)}
-                          className={`flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
-                            location.pathname === `/${item.to}`
-                              ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50'
-                              : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                          }`}
-                        >
-                          <Icon className="w-5 h-5" />
-                          <span>{item.label}</span>
-                        </RouterLink>
-                      );
-                    } else {
-                      return (
-                      <RouterLink
+                    // These are in-page scroll anchors ("home", "features", ...),
+                    // not routes. The mobile menu previously rendered them as
+                    // RouterLinks to /home etc., which are not registered routes,
+                    // behind an `isRoute` flag that navItems never sets.
+                    return (
+                      <ScrollLink
                         key={item.to}
                         to={item.to}
+                        smooth={true}
+                        duration={500}
+                        offset={-80}
+                        spy={true}
                         onClick={() => setIsMobileMenuOpen(false)}
-                        className={`flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl transition-colors ${
-                          location.pathname === item.to
-                            ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/50'
-                            : 'text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
-                        }`}
+                        className="flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl cursor-pointer transition-colors text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <Icon className="w-5 h-5" />
                         <span>{item.label}</span>
-                      </RouterLink>
-                      );
-                    }
+                      </ScrollLink>
+                    );
                   })}
 
                   <div className="space-y-2">
@@ -368,19 +356,15 @@ const Navbar: React.FC = () => {
                 className="flex items-center space-x-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 aria-label="User menu"
               >
-                {user?.avatar ? (
-                  <img
-                    src={user.avatar}
-                    alt={user.name}
-                    className="w-8 h-8 rounded-full object-cover ring-2 ring-blue-500/20"
-                  />
-                ) : (
-                  <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+                  {initials(user) ? (
+                    <span className="text-xs font-semibold text-white">{initials(user)}</span>
+                  ) : (
                     <User className="w-4 h-4 text-white" />
-                  </div>
-                )}
+                  )}
+                </div>
                 <span className="hidden md:block text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {user?.name}
+                  {displayName(user)}
                 </span>
               </motion.button>
               

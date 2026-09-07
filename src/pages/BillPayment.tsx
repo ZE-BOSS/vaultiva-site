@@ -11,15 +11,18 @@ import {
   CheckCircle
 } from 'lucide-react';
 import { useWallet } from '../contexts/WalletContext';
+import { toAmount, billsApi, ApiError } from '../api';
 
 const BillPayment: React.FC = () => {
-  const { wallets, addTransaction } = useWallet();
+  const { wallets, refresh } = useWallet();
   const [selectedService, setSelectedService] = useState<string | null>(null);
   const [selectedWallet, setSelectedWallet] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState<string>('');
   const [provider, setProvider] = useState<string>('');
   const [showSuccess, setShowSuccess] = useState(false);
+  const [payError, setPayError] = useState<string | null>(null);
+  const [paying, setPaying] = useState(false);
 
   const services = [
     {
@@ -79,16 +82,26 @@ const BillPayment: React.FC = () => {
     const service = services.find(s => s.id === selectedService);
     if (!service) return;
 
-    // Add transaction
-    addTransaction({
-      walletId: selectedWallet,
-      type: 'debit',
-      amount: parseFloat(amount),
-      description: `${service.name} - ${provider}`,
-      date: new Date(),
-      category: 'Bills',
-      status: 'completed'
-    });
+    // Pay through the backend. This previously wrote a fabricated "completed"
+    // debit into local state, so the UI reported a payment that never happened.
+    setPaying(true);
+    setPayError(null);
+    try {
+      await billsApi.pay({
+        walletId: selectedWallet,
+        amount: parseFloat(amount),
+        biller_code: provider,
+        customer: phoneNumber,
+        type: service.id,
+        country: 'NG',
+      });
+      await refresh();
+    } catch (err) {
+      setPayError(err instanceof ApiError ? err.message : 'That payment could not be completed.');
+      setPaying(false);
+      return;
+    }
+    setPaying(false);
 
     setShowSuccess(true);
     setTimeout(() => {
@@ -100,12 +113,15 @@ const BillPayment: React.FC = () => {
     }, 2000);
   };
 
-  const formatCurrency = (amount: number) => {
+  // Balances arrive from the API as Postgres numerics (strings); coerce here so
+  // every call site does not have to.
+  const formatCurrency = (amount: string | number) => {
+    const value = toAmount(amount);
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 2
-    }).format(amount);
+    }).format(value);
   };
 
   const PaymentForm = () => {
@@ -200,6 +216,11 @@ const BillPayment: React.FC = () => {
             </select>
           </div>
 
+          {payError ? (
+            <p role="alert" className="mb-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-300">
+              {payError}
+            </p>
+          ) : null}
           <div className="flex space-x-3">
             <button
               type="button"
@@ -210,9 +231,10 @@ const BillPayment: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+              disabled={paying}
+              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center justify-center space-x-2"
             >
-              <span>Pay {amount && formatCurrency(parseFloat(amount))}</span>
+              <span>{paying ? 'Paying…' : `Pay ${amount ? formatCurrency(parseFloat(amount)) : ''}`}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>

@@ -7,7 +7,6 @@ import {
   Users, 
   Shield, 
   TrendingUp, 
-  Plus,
   ArrowUpRight,
   ArrowDownRight,
   Eye,
@@ -17,10 +16,8 @@ import {
   Download,
   Bell,
   X,
-  Check,
   AlertTriangle,
   Info,
-  Zap,
   Building2,
   Clock,
   Copy,
@@ -29,19 +26,30 @@ import {
 import { useWallet } from '../contexts/WalletContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
+import { toAmount, walletApi, ApiError } from '../api';
+
+/** The API has no per-wallet colour, so derive a stable one from the type. */
+const walletColor = (type: string) =>
+  ({
+    main: 'bg-primary',
+    escrow: 'bg-purple-600',
+    split_bill: 'bg-emerald-600',
+    bill_payment: 'bg-amber-500',
+    others: 'bg-slate-500',
+  }[type] ?? 'bg-slate-500');
 
 const Dashboard: React.FC = () => {
-  const { wallets, transactions, getTotalBalance, addTransaction } = useWallet();
+  const { wallets, transactions, getTotalBalance, refresh } = useWallet();
   const { user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [showBalance, setShowBalance] = useState(true);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [depositAmount, setDepositAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [selectedWallet, setSelectedWallet] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   
   const recentTransactions = transactions.slice(0, 5);
@@ -86,12 +94,15 @@ const Dashboard: React.FC = () => {
     }
   ];
 
-  const formatCurrency = (amount: number) => {
+  // Balances arrive from the API as Postgres numerics (strings); coerce here so
+  // every call site does not have to.
+  const formatCurrency = (amount: string | number) => {
+    const value = toAmount(amount);
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 2
-    }).format(amount);
+    }).format(value);
   };
 
   const copyToClipboard = (text: string, field: string) => {
@@ -100,58 +111,39 @@ const Dashboard: React.FC = () => {
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const handleDeposit = async () => {
-    if (!depositAmount || !selectedWallet) return;
-    
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    addTransaction({
-      walletId: selectedWallet,
-      type: 'credit',
-      amount: parseFloat(depositAmount),
-      description: 'Bank Transfer Deposit',
-      date: new Date(),
-      category: 'Deposit',
-      status: 'completed'
-    });
-
-    setDepositAmount('');
-    setSelectedWallet('');
-    setShowDepositModal(false);
-    setIsLoading(false);
-  };
-
   const handleWithdraw = async () => {
     if (!withdrawAmount || !selectedWallet) return;
-    
-    const wallet = wallets.find(w => w.id === selectedWallet);
-    if (!wallet || wallet.balance < parseFloat(withdrawAmount)) {
-      alert('Insufficient balance');
+
+    const wallet = wallets.find((w) => w.id === selectedWallet);
+    const amount = parseFloat(withdrawAmount);
+
+    if (!wallet || toAmount(wallet.balance) < amount) {
+      setActionError('Insufficient balance for that amount.');
       return;
     }
-    
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    addTransaction({
-      walletId: selectedWallet,
-      type: 'debit',
-      amount: parseFloat(withdrawAmount),
-      description: 'Bank Transfer Withdrawal',
-      date: new Date(),
-      category: 'Withdrawal',
-      status: 'pending'
-    });
+    if (!user?.accountNumber || !user?.bank) {
+      setActionError('Add your bank account details in Profile before withdrawing.');
+      return;
+    }
 
-    setWithdrawAmount('');
-    setSelectedWallet('');
-    setShowWithdrawModal(false);
-    setIsLoading(false);
+    setIsLoading(true);
+    setActionError(null);
+    try {
+      await walletApi.withdraw({
+        walletId: selectedWallet,
+        amount,
+        accountNumber: user.accountNumber,
+        bankCode: user.bank,
+      });
+      await refresh();
+      setWithdrawAmount('');
+      setSelectedWallet('');
+      setShowWithdrawModal(false);
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : 'That withdrawal could not be completed.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const getNotificationIcon = (type: string) => {
@@ -183,7 +175,7 @@ const Dashboard: React.FC = () => {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-                Welcome back, {user?.name?.split(' ')[0]}! 👋
+                Welcome back, {user?.firstName ?? 'there'}! 👋
               </h1>
               <p className="text-gray-600 dark:text-gray-400">
                 Here's what's happening with your money today.
@@ -384,7 +376,7 @@ const Dashboard: React.FC = () => {
                             {transaction.description}
                           </p>
                           <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {transaction.date.toLocaleDateString()}
+                            {new Date(transaction.createdAt).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
@@ -437,7 +429,7 @@ const Dashboard: React.FC = () => {
                       className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-700 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-600 transition-all duration-300 cursor-pointer"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 ${wallet.color} rounded-lg flex items-center justify-center shadow-lg`}>
+                        <div className={`w-10 h-10 ${walletColor(wallet.type)} rounded-lg flex items-center justify-center shadow-lg`}>
                           <Wallet className="w-5 h-5 text-white" />
                         </div>
                         <div>
@@ -687,7 +679,7 @@ const Dashboard: React.FC = () => {
                       className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
                       placeholder="Enter amount"
                       min="1000"
-                      max={selectedWallet ? wallets.find(w => w.id === selectedWallet)?.balance : undefined}
+                      max={selectedWallet ? toAmount(wallets.find(w => w.id === selectedWallet)?.balance) : undefined}
                     />
                   </div>
                   
@@ -722,6 +714,11 @@ const Dashboard: React.FC = () => {
                   >
                     Cancel
                   </button>
+                  {actionError ? (
+                    <p role="alert" className="mb-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-300">
+                      {actionError}
+                    </p>
+                  ) : null}
                   <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { RefreshCw, Clock, Shield, AlertTriangle, Mail, Phone } from 'lucide-react';
+import { RefreshCw, Clock, Shield, AlertTriangle, Mail } from 'lucide-react';
 import SEOHead from '../components/SEOHead';
 
 const RefundPolicy: React.FC = () => {

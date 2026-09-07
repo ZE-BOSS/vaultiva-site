@@ -10,16 +10,13 @@ import {
   Copy,
   Download,
   Upload,
-  ArrowRight,
   Info,
   DollarSign,
   Smartphone,
-  Globe
-} from 'lucide-react';
+  Globe, Mail } from 'lucide-react';
 
 const BankingInstructions: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
-  const [selectedBank, setSelectedBank] = useState('');
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const bankDetails = {
