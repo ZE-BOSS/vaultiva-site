@@ -1,195 +1,227 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Eye, EyeOff, Mail, Lock, User, Loader } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { authApi, ApiError } from '../api';
+import { AuthShell, Button, Field } from '../components/ui';
+import SEOHead from '../components/SEOHead';
 
-const Register: React.FC = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+/**
+ * Three-step signup, the same shape as the mobile flow: contact → verification
+ * code → profile and password. Registration on this backend is passwordless at
+ * step one; the password is set when the profile is completed.
+ */
+type Step = 'contact' | 'code' | 'profile';
+
+export default function Register() {
+  const [step, setStep] = useState<Step>('contact');
+  const [contact, setContact] = useState('');
+  const [code, setCode] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  
-  const { register } = useAuth();
+
+  const { register, completeProfile } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const guard = async (fn: () => Promise<void>) => {
+    if (loading) return;
     setLoading(true);
-    setError('');
-
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      setLoading(false);
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      setLoading(false);
-      return;
-    }
-
+    setError(null);
     try {
-      const success = await register(name, email, password);
-      if (success) {
-        navigate('/dashboard');
-      } else {
-        setError('Registration failed. Please try again.');
-      }
+      await fn();
     } catch (err) {
-      setError('Something went wrong. Please try again.');
+      setError(err instanceof ApiError ? err.message : 'Something went wrong. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-800 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 50 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="w-full max-w-md"
-      >
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl font-bold text-white">V</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Create Account
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300">
-              Join Vaultivas and take control of your finances
-            </p>
-          </div>
+  const submitContact = (e: React.FormEvent) => {
+    e.preventDefault();
+    void guard(async () => {
+      const sent = await register(contact);
+      setContact(sent);
+      setStep('code');
+    });
+  };
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Full Name
-              </label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-                  placeholder="Enter your full name"
-                  required
-                />
-              </div>
-            </div>
+  const submitCode = (e: React.FormEvent) => {
+    e.preventDefault();
+    void guard(async () => {
+      await authApi.verifyCode(contact, code);
+      setStep('profile');
+    });
+  };
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-            </div>
+  const submitProfile = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password !== confirm) {
+      setError('Those passwords do not match.');
+      return;
+    }
+    void guard(async () => {
+      await completeProfile(contact, {
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
+        ...(contact.includes('@') ? { email: contact } : { phone: contact }),
+        password,
+      });
+      navigate('/dashboard');
+    });
+  };
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-                  placeholder="Create a password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+  const errorNode = error ? (
+    <p role="alert" className="mt-5 whitespace-pre-line text-sm text-danger">
+      {error}
+    </p>
+  ) : null;
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  id="confirmPassword"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-all duration-200"
-                  placeholder="Confirm your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-            </div>
+  if (step === 'contact') {
+    return (
+      <>
+        <SEOHead title="Create account — Vaultiva" description="Open your Vaultiva account." />
+        <form onSubmit={submitContact} className="contents">
+          <AuthShell
+            title="Create account"
+            subtitle="Enter your phone or email. we’ll send you a confirmation code"
+            footer={
+              <>
+                <Button type="submit" loading={loading} disabled={!contact.trim()}>
+                  Create account
+                </Button>
+                <p className="mt-3 text-[15px] leading-6 text-ink-muted">
+                  By creating an account, I agree to Vaultiva{' '}
+                  <span className="font-bold">Terms of Services</span> and{' '}
+                  <span className="font-bold">Privacy Policy</span>
+                </p>
+              </>
+            }
+          >
+            <Field
+              label="Email/Phone Number"
+              name="contact"
+              autoComplete="email"
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+            />
+            <Link to="/login" className="text-[17px] text-primary">
+              Already have an account? Login
+            </Link>
+            {errorNode}
+          </AuthShell>
+        </form>
+      </>
+    );
+  }
 
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-800 rounded-lg p-3">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-              </div>
-            )}
-
+  if (step === 'code') {
+    return (
+      <>
+        <SEOHead title="Verify your account — Vaultiva" />
+        <form onSubmit={submitCode} className="contents">
+          <AuthShell
+            title="6-digit code"
+            subtitle={`Code sent to ${contact}`}
+            footer={
+              <Button type="submit" loading={loading} disabled={code.length < 6}>
+                Continue
+              </Button>
+            }
+          >
+            <Field
+              label="Verification code"
+              name="code"
+              inputMode="numeric"
+              maxLength={6}
+              value={code}
+              onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+            />
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-600 hover:to-purple-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+              type="button"
+              className="text-[16px] text-primary"
+              onClick={() =>
+                void guard(async () => {
+                  await authApi.resendCode(
+                    contact.includes('@') ? { email: contact } : { phone: contact },
+                  );
+                })
+              }
             >
-              {loading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <Loader className="w-5 h-5 animate-spin" />
-                  <span>Creating Account...</span>
-                </div>
-              ) : (
-                'Create Account'
-              )}
+              Re-send code
             </button>
-          </form>
+            {errorNode}
+          </AuthShell>
+        </form>
+      </>
+    );
+  }
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-600 dark:text-gray-300">
-              Already have an account?{' '}
-              <Link to="/login" className="text-blue-600 hover:text-blue-700 font-semibold">
-                Sign in
-              </Link>
-            </p>
-          </div>
-        </div>
-      </motion.div>
-    </div>
+  return (
+    <>
+      <SEOHead title="Complete your profile — Vaultiva" />
+      <form onSubmit={submitProfile} className="contents">
+        <AuthShell
+          title="Create account"
+          subtitle="Fill in the following information correctly"
+          footer={
+            <Button
+              type="submit"
+              loading={loading}
+              disabled={!firstName.trim() || !lastName.trim() || password.length < 8}
+            >
+              Continue
+            </Button>
+          }
+        >
+          <Field
+            label="First Name"
+            name="firstName"
+            autoComplete="given-name"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+          />
+          <Field
+            label="Last Name"
+            name="lastName"
+            autoComplete="family-name"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+          />
+          <Field
+            label="Password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            rightSlot={
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                className="pl-2 text-ink-muted"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            }
+          />
+          <Field
+            label="Confirm Password"
+            name="confirmPassword"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+          />
+          {errorNode}
+        </AuthShell>
+      </form>
+    </>
   );
-};
-
-export default Register;
+}

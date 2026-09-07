@@ -1,320 +1,252 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { 
-  Plus, 
-  Eye, 
-  EyeOff, 
-  Edit, 
-  Trash2, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Wallet,
-  Users,
-  Briefcase,
-  Shield
-} from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Plus, ArrowUp, Palette, Bell, RefreshCw } from 'lucide-react';
 import { useWallet } from '../contexts/WalletContext';
+import { toAmount, type Wallet, type WalletType } from '../api';
+import { Button, Field } from '../components/ui';
+import SEOHead from '../components/SEOHead';
+import walletCard from '../assets/art/wallet-card.webp';
 
-const Wallets: React.FC = () => {
-  const { wallets, transactions, addWallet, updateWallet, deleteWallet } = useWallet();
-  const [showBalances, setShowBalances] = useState(true);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [selectedWallet, setSelectedWallet] = useState<string | null>(null);
+/**
+ * Mirrors the mobile Wallets screen (`vaultiva-mobile/assets/images/Wallet.jpg`):
+ * the gradient wallet card with the balance drawn over it, a masked account
+ * pill, "Create new" / "Transfer" pills, then the recent transaction list.
+ *
+ * The card artwork is the same asset the mobile app uses, extracted from the
+ * reference with its baked-in text removed.
+ */
+const WALLET_TYPES: { value: WalletType; label: string }[] = [
+  { value: 'main', label: 'Main' },
+  { value: 'escrow', label: 'Escrow' },
+  { value: 'split_bill', label: 'Split bill' },
+  { value: 'bill_payment', label: 'Bill payment' },
+  { value: 'others', label: 'Other' },
+];
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 2
-    }).format(amount);
-  };
+function naira(value: string | number | undefined) {
+  return toAmount(value).toLocaleString('en-NG', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
-  const getWalletIcon = (type: string) => {
-    switch (type) {
-      case 'personal': return Wallet;
-      case 'group': return Users;
-      case 'business': return Briefcase;
-      case 'escrow': return Shield;
-      default: return Wallet;
+function maskAccount(accountNumber?: string) {
+  if (!accountNumber || accountNumber.length < 6) return accountNumber ?? '';
+  return `${accountNumber.slice(0, 3)}****${accountNumber.slice(-3)}`;
+}
+
+export default function Wallets() {
+  const { wallets, transactions, loading, error, refresh, createWallet } = useWallet();
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [newType, setNewType] = useState<WalletType>('others');
+  const [formError, setFormError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const active: Wallet | undefined = useMemo(
+    () => wallets.find((w) => w.id === activeId) ?? wallets.find((w) => w.type === 'main') ?? wallets[0],
+    [wallets, activeId],
+  );
+
+  const walletTransactions = useMemo(
+    () => (active ? transactions.filter((t) => t.walletId === active.id) : transactions),
+    [transactions, active],
+  );
+
+  const [whole, cents] = naira(active?.balance).split('.');
+
+  const submitCreate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submitting) return;
+    setSubmitting(true);
+    setFormError(null);
+    try {
+      await createWallet({ name: newName.trim(), type: newType });
+      setNewName('');
+      setCreating(false);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Could not create that wallet.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
-  const getWalletTransactions = (walletId: string) => {
-    return transactions.filter(t => t.walletId === walletId).slice(0, 3);
-  };
-
-  const AddWalletModal = () => {
-    const [name, setName] = useState('');
-    const [type, setType] = useState<'personal' | 'group' | 'business' | 'escrow'>('personal');
-    const [color, setColor] = useState('bg-gradient-to-r from-blue-500 to-cyan-500');
-
-    const colors = [
-      'bg-gradient-to-r from-blue-500 to-cyan-500',
-      'bg-gradient-to-r from-green-500 to-emerald-500',
-      'bg-gradient-to-r from-purple-500 to-pink-500',
-      'bg-gradient-to-r from-orange-500 to-red-500',
-      'bg-gradient-to-r from-indigo-500 to-purple-500',
-      'bg-gradient-to-r from-pink-500 to-rose-500'
-    ];
-
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault();
-      addWallet({
-        name,
-        type,
-        balance: 0,
-        currency: 'NGN',
-        color,
-        icon: type
-      });
-      setShowAddModal(false);
-      setName('');
-    };
-
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-md"
-        >
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-            Add New Wallet
-          </h2>
-          
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Wallet Name
-              </label>
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="Enter wallet name"
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Wallet Type
-              </label>
-              <select
-                value={type}
-                onChange={(e) => setType(e.target.value as any)}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="personal">Personal</option>
-                <option value="group">Group</option>
-                <option value="business">Business</option>
-                <option value="escrow">Escrow</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Color Theme
-              </label>
-              <div className="grid grid-cols-3 gap-3">
-                {colors.map((colorClass, index) => (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => setColor(colorClass)}
-                    className={`w-full h-12 ${colorClass} rounded-lg ${
-                      color === colorClass ? 'ring-2 ring-blue-500 ring-offset-2' : ''
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="flex space-x-3">
-              <button
-                type="button"
-                onClick={() => setShowAddModal(false)}
-                className="flex-1 px-4 py-3 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
-              >
-                Create Wallet
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </div>
-    );
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-8"
-        >
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              My Wallets
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Manage your multiple wallets and track transactions
-            </p>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => setShowBalances(!showBalances)}
-              className="flex items-center space-x-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-            >
-              {showBalances ? (
-                <EyeOff className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              ) : (
-                <Eye className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-              )}
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {showBalances ? 'Hide' : 'Show'} Balances
-              </span>
-            </button>
-            
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="text-sm font-medium">Add Wallet</span>
-            </button>
-          </div>
-        </motion.div>
+    <>
+      <SEOHead title="Wallets — Vaultiva" description="Your Vaultiva wallets and balances." />
 
-        {/* Wallets Grid */}
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {wallets.map((wallet, index) => {
-            const Icon = getWalletIcon(wallet.type);
-            const walletTransactions = getWalletTransactions(wallet.id);
-            
-            return (
-              <motion.div
-                key={wallet.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
-              >
-                {/* Wallet Header */}
-                <div className={`${wallet.color} p-6 text-white relative overflow-hidden`}>
-                  <div className="absolute inset-0 bg-black/10"></div>
-                  <div className="relative z-10">
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-lg">{wallet.name}</h3>
-                          <p className="text-white/80 text-sm capitalize">{wallet.type}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        <button className="p-1 hover:bg-white/20 rounded">
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 hover:bg-white/20 rounded">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <p className="text-white/80 text-sm">Balance</p>
-                      <p className="text-2xl font-bold">
-                        {showBalances ? formatCurrency(wallet.balance) : '****'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Recent Transactions */}
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <h4 className="font-semibold text-gray-900 dark:text-white">
-                      Recent Activity
-                    </h4>
-                    <button
-                      onClick={() => setSelectedWallet(selectedWallet === wallet.id ? null : wallet.id)}
-                      className="text-blue-600 hover:text-blue-700 text-sm font-medium"
-                    >
-                      {selectedWallet === wallet.id ? 'Show Less' : 'View All'}
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {walletTransactions.length > 0 ? (
-                      walletTransactions.map((transaction) => (
-                        <div
-                          key={transaction.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                              transaction.type === 'credit' 
-                                ? 'bg-green-100 dark:bg-green-900' 
-                                : 'bg-red-100 dark:bg-red-900'
-                            }`}>
-                              {transaction.type === 'credit' ? (
-                                <ArrowDownRight className="w-4 h-4 text-green-600 dark:text-green-400" />
-                              ) : (
-                                <ArrowUpRight className="w-4 h-4 text-red-600 dark:text-red-400" />
-                              )}
-                            </div>
-                            <div>
-                              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                                {transaction.description}
-                              </p>
-                              <p className="text-xs text-gray-500 dark:text-gray-400">
-                                {transaction.date.toLocaleDateString()}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className={`text-sm font-semibold ${
-                              transaction.type === 'credit' 
-                                ? 'text-green-600 dark:text-green-400' 
-                                : 'text-red-600 dark:text-red-400'
-                            }`}>
-                              {transaction.type === 'credit' ? '+' : '-'}{formatCurrency(transaction.amount)}
-                            </p>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-8">
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                          No transactions yet
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
+      <div className="mx-auto w-full max-w-2xl px-4 py-8">
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-semibold text-ink dark:text-white">Wallets</h1>
+          <button
+            onClick={() => void refresh()}
+            className="inline-flex items-center gap-2 text-sm text-ink-muted hover:text-primary"
+            aria-label="Refresh wallets"
+          >
+            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+            Refresh
+          </button>
         </div>
 
-        {/* Add Wallet Modal */}
-        {showAddModal && <AddWalletModal />}
-      </div>
-    </div>
-  );
-};
+        {error ? (
+          <p role="alert" className="mb-6 rounded-card bg-danger/10 p-4 text-sm text-danger">
+            {error}
+          </p>
+        ) : null}
 
-export default Wallets;
+        {/* ── Wallet card ─────────────────────────────────────────────────── */}
+        <div className="relative overflow-hidden rounded-card" style={{ aspectRatio: '354 / 214' }}>
+          <img src={walletCard} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover" />
+
+          <div className="relative flex h-full flex-col px-6 py-4 text-white">
+            <div className="text-right leading-tight">
+              <div className="text-2xl font-extrabold tracking-wide">
+                {(active?.type ?? 'main').replace('_', ' ').toUpperCase()}
+              </div>
+              <div className="text-base font-medium tracking-wide">WALLET</div>
+            </div>
+
+            <div className="mt-auto">
+              <p className="text-lg">Current Balance</p>
+              <div className="flex items-center justify-between">
+                <p className="text-4xl font-medium">
+                  ₦{whole}
+                  <span className="text-2xl">.{cents}</span>
+                </p>
+                <span
+                  className="flex h-11 w-11 items-center justify-center rounded-[10px] border border-white/60"
+                  aria-hidden="true"
+                >
+                  <Plus size={28} strokeWidth={1.6} className="text-white/85" />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {active?.accountNumber ? (
+          <p className="mx-auto mt-4 w-fit rounded-pill bg-[#EDEFF5] px-5 py-1.5 text-[15px] text-ink-strong">
+            {maskAccount(active.accountNumber)}
+          </p>
+        ) : null}
+
+        {/* ── Actions ─────────────────────────────────────────────────────── */}
+        <div className="mt-4 flex gap-4">
+          <button
+            onClick={() => setCreating((v) => !v)}
+            className="flex h-9 flex-1 items-center justify-between rounded-pill bg-white pl-4 pr-1 shadow-pill"
+          >
+            <span className="text-sm font-medium text-ink-strong">Create new</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-[9px] border-2 border-primary-400 bg-primary-50">
+              <Palette size={16} className="text-primary" />
+            </span>
+          </button>
+
+          <a
+            href="/bills"
+            className="flex h-9 flex-1 items-center justify-between rounded-pill bg-white pl-4 pr-1 shadow-pill"
+          >
+            <span className="text-sm font-medium text-ink-strong">Transfer</span>
+            <span className="flex h-7 w-7 items-center justify-center rounded-[9px] border-2 border-primary-400 bg-primary-50">
+              <ArrowUp size={16} className="text-primary" />
+            </span>
+          </a>
+        </div>
+
+        {creating ? (
+          <form onSubmit={submitCreate} className="mt-6 rounded-card bg-white p-5 shadow-card">
+            <Field
+              label="Wallet Name"
+              name="walletName"
+              value={newName}
+              onChange={(e) => setNewName(e.target.value)}
+              error={formError ?? undefined}
+            />
+            <label htmlFor="walletType" className="mb-2 block text-[16px] text-ink">
+              Type
+            </label>
+            <select
+              id="walletType"
+              value={newType}
+              onChange={(e) => setNewType(e.target.value as WalletType)}
+              className="mb-6 h-field w-full rounded-input bg-surface-input px-4 text-[16px] text-ink outline-none"
+            >
+              {WALLET_TYPES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+            <Button type="submit" loading={submitting} disabled={!newName.trim()}>
+              Create wallet
+            </Button>
+          </form>
+        ) : null}
+
+        {/* ── Wallet switcher ─────────────────────────────────────────────── */}
+        {wallets.length > 1 ? (
+          <div className="mt-6 flex flex-wrap gap-2">
+            {wallets.map((w) => (
+              <button
+                key={w.id}
+                onClick={() => setActiveId(w.id)}
+                aria-pressed={active?.id === w.id}
+                className={`rounded-pill px-4 py-1.5 text-sm ${
+                  active?.id === w.id
+                    ? 'bg-primary text-white'
+                    : 'bg-surface text-ink-strong hover:bg-primary-100'
+                }`}
+              >
+                {w.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {/* ── Transactions ────────────────────────────────────────────────── */}
+        <h2 className="mt-8 text-xl font-medium text-ink dark:text-white">Recent Transaction</h2>
+
+        {loading ? (
+          <p className="mt-6 text-sm text-ink-muted">Loading…</p>
+        ) : !walletTransactions.length ? (
+          <p className="mt-6 text-sm text-ink-muted">No transactions yet.</p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {walletTransactions.map((t) => {
+              const amount = toAmount(t.amount);
+              const credit = amount >= 0;
+              return (
+                <li
+                  key={t.id}
+                  className="flex h-16 items-center gap-3 rounded-card bg-[#F5F6FA] px-4"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-[9px] bg-primary-100">
+                    <Bell size={17} className="text-primary" />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-base font-semibold text-ink">
+                      {t.description ?? t.type}
+                    </span>
+                    <span className="block text-[13px] text-ink-muted">
+                      {new Date(t.createdAt).toLocaleString('en-NG', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </span>
+                  <span className="text-[17px] font-semibold text-ink">
+                    {credit ? '+' : '-'}
+                    {naira(Math.abs(amount)).split('.')[0]}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </>
+  );
+}

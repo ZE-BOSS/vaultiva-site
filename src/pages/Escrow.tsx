@@ -7,11 +7,11 @@ import {
   CheckCircle, 
   XCircle,
   Eye,
-  MessageSquare,
-  Upload,
-  Download
+  MessageSquare
 } from 'lucide-react';
 import { useWallet } from '../contexts/WalletContext';
+import { useAuth } from '../contexts/AuthContext';
+import { toAmount, escrowApi, ApiError } from '../api';
 
 interface EscrowTransaction {
   id: string;
@@ -44,7 +44,8 @@ interface Message {
 }
 
 const Escrow: React.FC = () => {
-  const { wallets, addTransaction } = useWallet();
+  const { wallets, refresh } = useWallet();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'create' | 'active' | 'history'>('create');
   const [selectedTransaction, setSelectedTransaction] = useState<string | null>(null);
   
@@ -54,6 +55,7 @@ const Escrow: React.FC = () => {
   const [amount, setAmount] = useState('');
   const [sellerEmail, setSellerEmail] = useState('');
   const [selectedWallet, setSelectedWallet] = useState('');
+  const [createError, setCreateError] = useState<string | null>(null);
 
   const [escrowTransactions, setEscrowTransactions] = useState<EscrowTransaction[]>([
     {
@@ -130,12 +132,15 @@ const Escrow: React.FC = () => {
     }
   ]);
 
-  const formatCurrency = (amount: number) => {
+  // Balances arrive from the API as Postgres numerics (strings); coerce here so
+  // every call site does not have to.
+  const formatCurrency = (amount: string | number) => {
+    const value = toAmount(amount);
     return new Intl.NumberFormat('en-NG', {
       style: 'currency',
       currency: 'NGN',
       minimumFractionDigits: 2
-    }).format(amount);
+    }).format(value);
   };
 
   const getStatusColor = (status: string) => {
@@ -158,7 +163,7 @@ const Escrow: React.FC = () => {
     }
   };
 
-  const createEscrow = (e: React.FormEvent) => {
+  const createEscrow = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title || !description || !amount || !sellerEmail || !selectedWallet) return;
@@ -202,16 +207,29 @@ const Escrow: React.FC = () => {
 
     setEscrowTransactions([newEscrow, ...escrowTransactions]);
 
-    // Add transaction to wallet
-    addTransaction({
-      walletId: selectedWallet,
-      type: 'debit',
-      amount: parseFloat(amount),
-      description: `Escrow - ${title}`,
-      date: new Date(),
-      category: 'Escrow',
-      status: 'completed'
-    });
+    // Create and fund the escrow server-side. This previously only pushed a
+    // local object and a fabricated debit, so nothing was actually held.
+    setCreateError(null);
+    try {
+      // The API models escrow participants by user id, so the seller's email is
+      // carried in metadata until an invite-by-email endpoint exists. Release is
+      // 7 days out by default; the form does not collect a date yet.
+      const releaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+      await escrowApi.create({
+        title,
+        description,
+        amount: parseFloat(amount),
+        type: 'one_time',
+        mode: 'single',
+        releaseDate,
+        participants: user ? [{ userId: user.id, role: 'payer' }] : [],
+        metadata: { sellerEmail, walletId: selectedWallet },
+      });
+      await refresh();
+    } catch (err) {
+      setCreateError(err instanceof ApiError ? err.message : 'That escrow could not be created.');
+      return;
+    }
 
     // Reset form
     setTitle('');
@@ -334,6 +352,11 @@ const Escrow: React.FC = () => {
           </ul>
         </div>
 
+        {createError ? (
+          <p role="alert" className="mb-3 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-900/30 dark:text-red-300">
+            {createError}
+          </p>
+        ) : null}
         <button
           type="submit"
           className="w-full px-4 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:from-purple-600 hover:to-pink-600 transition-colors flex items-center justify-center space-x-2"
@@ -345,7 +368,7 @@ const Escrow: React.FC = () => {
     </motion.div>
   );
 
-  const TransactionList = ({ transactions, showAll = false }: { transactions: EscrowTransaction[], showAll?: boolean }) => (
+  const TransactionList = ({ transactions }: { transactions: EscrowTransaction[] }) => (
     <div className="space-y-4">
       {transactions.map((transaction, index) => {
         const StatusIcon = getStatusIcon(transaction.status);

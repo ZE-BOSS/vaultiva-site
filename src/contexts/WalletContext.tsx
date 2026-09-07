@@ -1,33 +1,21 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface Wallet {
-  id: string;
-  name: string;
-  type: 'personal' | 'group' | 'business' | 'escrow';
-  balance: number;
-  currency: string;
-  color: string;
-  icon: string;
-}
-
-interface Transaction {
-  id: string;
-  walletId: string;
-  type: 'credit' | 'debit';
-  amount: number;
-  description: string;
-  date: Date;
-  category: string;
-  status: 'completed' | 'pending' | 'failed';
-}
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+import { walletApi, ApiError, type Wallet, type Transaction, type WalletType } from '../api';
+import { useAuth } from './AuthContext';
 
 interface WalletContextType {
   wallets: Wallet[];
   transactions: Transaction[];
-  addWallet: (wallet: Omit<Wallet, 'id'>) => void;
-  updateWallet: (id: string, updates: Partial<Wallet>) => void;
-  deleteWallet: (id: string) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => void;
+  loading: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  createWallet: (input: { name: string; type: WalletType }) => Promise<void>;
   getTotalBalance: () => number;
   getWalletById: (id: string) => Wallet | undefined;
 }
@@ -35,148 +23,82 @@ interface WalletContextType {
 const WalletContext = createContext<WalletContextType | undefined>(undefined);
 
 export const useWallet = () => {
-  const context = useContext(WalletContext);
-  if (!context) {
-    throw new Error('useWallet must be used within a WalletProvider');
-  }
-  return context;
+  const ctx = useContext(WalletContext);
+  if (!ctx) throw new Error('useWallet must be used within a WalletProvider');
+  return ctx;
 };
 
+/**
+ * Live wallet data.
+ *
+ * This previously held a hard-coded array of four wallets and a list of invented
+ * transactions in component state, with add/update/delete mutating that array
+ * only. It now reads from the backend and reflects real balances.
+ */
 export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [wallets, setWallets] = useState<Wallet[]>([
-    {
-      id: '1',
-      name: 'Personal Wallet',
-      type: 'personal',
-      balance: 15586000.03,
-      currency: 'NGN',
-      color: 'bg-gradient-to-r from-blue-500 to-cyan-500',
-      icon: 'wallet'
-    },
-    {
-      id: '2',
-      name: 'Group Wallet',
-      type: 'group',
-      balance: 850000.00,
-      currency: 'NGN',
-      color: 'bg-gradient-to-r from-green-500 to-emerald-500',
-      icon: 'users'
-    },
-    {
-      id: '3',
-      name: 'Business Wallet',
-      type: 'business',
-      balance: 2500000.00,
-      currency: 'NGN',
-      color: 'bg-gradient-to-r from-purple-500 to-pink-500',
-      icon: 'briefcase'
-    },
-    // {
-    //   id: '4',
-    //   name: 'Escrow Wallet',
-    //   type: 'escrow',
-    //   balance: 1200000.00,
-    //   currency: 'NGN',
-    //   color: 'bg-gradient-to-r from-orange-500 to-red-500',
-    //   icon: 'shield'
-    // }
-  ]);
+  const { isAuthenticated, user } = useAuth();
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      id: '1',
-      walletId: '1',
-      type: 'debit',
-      amount: 5000,
-      description: 'Airtime Purchase - MTN',
-      date: new Date('2024-01-15'),
-      category: 'Bills',
-      status: 'completed'
-    },
-    {
-      id: '2',
-      walletId: '1',
-      type: 'debit',
-      amount: 15000,
-      description: 'Internet Bundle - Glo',
-      date: new Date('2024-01-14'),
-      category: 'Bills',
-      status: 'completed'
-    },
-    {
-      id: '3',
-      walletId: '2',
-      type: 'credit',
-      amount: 25000,
-      description: 'Bill Split - Restaurant',
-      date: new Date('2024-01-13'),
-      category: 'Split',
-      status: 'completed'
-    },
-    {
-      id: '4',
-      walletId: '4',
-      type: 'credit',
-      amount: 100000,
-      description: 'Laptop Purchase Escrow',
-      date: new Date('2024-01-12'),
-      category: 'Escrow',
-      status: 'pending'
+  const refresh = useCallback(async () => {
+    if (!isAuthenticated) {
+      setWallets([]);
+      setTransactions([]);
+      return;
     }
-  ]);
+    setLoading(true);
+    setError(null);
+    try {
+      // Transactions must not fail the whole load if only that endpoint errors.
+      const [w, t] = await Promise.allSettled([walletApi.list(), walletApi.transactions()]);
+      if (w.status === 'fulfilled') setWallets(w.value ?? []);
+      else throw w.reason;
+      if (t.status === 'fulfilled') setTransactions(t.value ?? []);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not load your wallets.');
+    } finally {
+      setLoading(false);
+    }
+  }, [isAuthenticated]);
 
-  const addWallet = (wallet: Omit<Wallet, 'id'>) => {
-    const newWallet = {
-      ...wallet,
-      id: Date.now().toString()
-    };
-    setWallets(prev => [...prev, newWallet]);
-  };
+  useEffect(() => {
+    void refresh();
+  }, [refresh]);
 
-  const updateWallet = (id: string, updates: Partial<Wallet>) => {
-    setWallets(prev => prev.map(wallet => 
-      wallet.id === id ? { ...wallet, ...updates } : wallet
-    ));
-  };
+  const createWallet = useCallback(
+    async ({ name, type }: { name: string; type: WalletType }) => {
+      if (!user) throw new Error('You must be signed in to create a wallet.');
+      await walletApi.create({ name, type, customerId: user.id, currency: 'NGN' });
+      await refresh();
+    },
+    [user, refresh],
+  );
 
-  const deleteWallet = (id: string) => {
-    setWallets(prev => prev.filter(wallet => wallet.id !== id));
-  };
+  const getTotalBalance = useCallback(
+    () => wallets.reduce((sum, w) => sum + Number(w.balance ?? 0), 0),
+    [wallets],
+  );
 
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction = {
-      ...transaction,
-      id: Date.now().toString()
-    };
-    setTransactions(prev => [newTransaction, ...prev]);
-    
-    // Update wallet balance
-    updateWallet(transaction.walletId, {
-      balance: wallets.find(w => w.id === transaction.walletId)!.balance + 
-        (transaction.type === 'credit' ? transaction.amount : -transaction.amount)
-    });
-  };
+  const getWalletById = useCallback(
+    (id: string) => wallets.find((w) => w.id === id),
+    [wallets],
+  );
 
-  const getTotalBalance = () => {
-    return wallets.reduce((total, wallet) => total + wallet.balance, 0);
-  };
-
-  const getWalletById = (id: string) => {
-    return wallets.find(wallet => wallet.id === id);
-  };
-
-  return (
-    <WalletContext.Provider value={{
+  const value = useMemo<WalletContextType>(
+    () => ({
       wallets,
       transactions,
-      addWallet,
-      updateWallet,
-      deleteWallet,
-      addTransaction,
+      loading,
+      error,
+      refresh,
+      createWallet,
       getTotalBalance,
-      getWalletById
-    }}>
-      {children}
-    </WalletContext.Provider>
+      getWalletById,
+    }),
+    [wallets, transactions, loading, error, refresh, createWallet, getTotalBalance, getWalletById],
   );
+
+  return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>;
 };

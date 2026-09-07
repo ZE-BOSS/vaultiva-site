@@ -15,21 +15,21 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { displayName, initials } from '../api';
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
-  const { isDark } = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [showSensitive, setShowSensitive] = useState(false);
   
+  // These were hard-coded sample values; they now reflect the signed-in user.
   const [formData, setFormData] = useState({
-    name: user?.name || '',
+    name: displayName(user),
     email: user?.email || '',
-    phone: '+234 801 234 5678',
-    address: 'Lagos, Nigeria',
-    bvn: '12345678901',
-    nin: '12345678901'
+    phone: user?.phone || '',
+    address: user?.address || '',
+    bvn: user?.bvn || '',
+    nin: user?.nin || ''
   });
 
   const [notifications, setNotifications] = useState({
@@ -55,12 +55,12 @@ const Profile: React.FC = () => {
   const handleCancel = () => {
     // Reset form data
     setFormData({
-      name: user?.name || '',
+      name: displayName(user),
       email: user?.email || '',
-      phone: '+234 801 234 5678',
-      address: 'Lagos, Nigeria',
-      bvn: '12345678901',
-      nin: '12345678901'
+      phone: user?.phone || '',
+      address: user?.address || '',
+      bvn: user?.bvn || '',
+      nin: user?.nin || ''
     });
     setIsEditing(false);
   };
@@ -126,17 +126,13 @@ const Profile: React.FC = () => {
             <div className="p-6">
               <div className="flex items-center space-x-6 mb-8">
                 <div className="relative">
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-24 h-24 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-24 h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                  <div className="w-24 h-24 bg-primary rounded-full flex items-center justify-center">
+                    {initials(user) ? (
+                      <span className="text-2xl font-semibold text-white">{initials(user)}</span>
+                    ) : (
                       <User className="w-12 h-12 text-white" />
-                    </div>
-                  )}
+                    )}
+                  </div>
                   {isEditing && (
                     <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center hover:bg-blue-700 transition-colors">
                       <Edit className="w-4 h-4" />
@@ -145,7 +141,7 @@ const Profile: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {user?.name}
+                    {displayName(user)}
                   </h3>
                   <p className="text-gray-600 dark:text-gray-400">
                     Verified Account

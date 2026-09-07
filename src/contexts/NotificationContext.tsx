@@ -115,7 +115,8 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const messages = {
           transaction: ['Payment completed successfully', 'Bill payment processed', 'Transfer received'],
           account: ['Balance updated', 'New wallet created', 'Profile updated'],
-          system: ['Maintenance scheduled', 'New feature available', 'System update completed']
+          system: ['Maintenance scheduled', 'New feature available', 'System update completed'],
+          security: ['New sign-in detected', 'Password changed', 'Two-factor authentication enabled']
         };
 
         addNotification({

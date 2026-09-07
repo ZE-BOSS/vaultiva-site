@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { 
   Brain, 
   TrendingUp, 
-  TrendingDown, 
   AlertTriangle, 
   Lightbulb,
   Target,
@@ -12,10 +11,10 @@ import {
   Zap
 } from 'lucide-react';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { useWallet } from '../contexts/WalletContext';
 
 const AIInsights: React.FC = () => {
-  const { transactions, wallets } = useWallet();
+  // NOTE: this page still renders hard-coded insight data. It should read from
+  // insightsApi (/ai-insights/insights and /recommendations) — see HANDOVER.md.
 
   // Mock AI insights data
   const spendingByCategory = [
