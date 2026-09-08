@@ -1,5 +1,7 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import { billSplitApi, walletApi, ApiError, type BillSplit, type Wallet } from '../api';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Users, 
   Plus, 
@@ -35,34 +37,62 @@ const BillSplitting: React.FC = () => {
   const [totalAmount, setTotalAmount] = useState<string>('');
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [newParticipant, setNewParticipant] = useState({ name: '', email: '' });
-  const [splitBills, setSplitBills] = useState<SplitBill[]>([
-    {
-      id: '1',
-      title: 'Restaurant Bill - Downtown',
-      totalAmount: 45000,
-      participants: [
-        { id: '1', name: 'John Doe', email: 'john@example.com', amount: 15000, paid: true },
-        { id: '2', name: 'Jane Smith', email: 'jane@example.com', amount: 15000, paid: true },
-        { id: '3', name: 'Mike Johnson', email: 'mike@example.com', amount: 15000, paid: false }
-      ],
-      createdAt: new Date('2024-01-10'),
-      status: 'active',
-      createdBy: 'You'
-    },
-    {
-      id: '2',
-      title: 'Netflix Subscription',
-      totalAmount: 3600,
-      participants: [
-        { id: '1', name: 'Sarah Wilson', email: 'sarah@example.com', amount: 1200, paid: true },
-        { id: '2', name: 'Tom Brown', email: 'tom@example.com', amount: 1200, paid: true },
-        { id: '3', name: 'Lisa Davis', email: 'lisa@example.com', amount: 1200, paid: true }
-      ],
-      createdAt: new Date('2024-01-05'),
-      status: 'completed',
-      createdBy: 'Sarah Wilson'
+  /**
+   * Real splits, from the API.
+   *
+   * This page used to seed itself with two invented splits — "Restaurant Bill -
+   * Downtown" and "Netflix Subscription", with fabricated people and amounts —
+   * so every signed-in user saw financial obligations that did not exist.
+   * Creating a split only pushed onto this array and never reached the server,
+   * so it vanished on refresh, and "Mark as paid" flipped a local flag while no
+   * money moved.
+   */
+  const { user } = useAuth();
+  const [splitBills, setSplitBills] = useState<SplitBill[]>([]);
+  const [wallets, setWallets] = useState<Wallet[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const toSplitBill = (b: BillSplit): SplitBill => ({
+    id: b.id,
+    title: b.name,
+    totalAmount: Number(b.totalAmount ?? 0),
+    participants: (b.participants ?? []).map((p) => ({
+      id: p.id,
+      name: p.name ?? 'Pending invite',
+      email: '',
+      amount: Number(p.amount ?? 0),
+      paid: Boolean(p.hasPaid),
+    })),
+    createdAt: new Date(b.createdAt),
+    status:
+      b.status === 'completed' || b.status === 'cancelled'
+        ? (b.status as SplitBill['status'])
+        : 'active',
+    createdBy: 'You',
+  });
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [splits, walletList] = await Promise.all([
+        billSplitApi.list(),
+        walletApi.list(),
+      ]);
+      setSplitBills(splits.map(toSplitBill));
+      setWallets(walletList);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not load your splits.');
+    } finally {
+      setLoading(false);
     }
-  ]);
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -100,42 +130,69 @@ const BillSplitting: React.FC = () => {
     setParticipants(participants.map(p => ({ ...p, amount: splitAmount })));
   };
 
-  const createSplitBill = () => {
-    if (!billTitle || !totalAmount || participants.length === 0) return;
-    
-    const newBill: SplitBill = {
-      id: Date.now().toString(),
-      title: billTitle,
-      totalAmount: parseFloat(totalAmount),
-      participants: participants,
-      createdAt: new Date(),
-      status: 'active',
-      createdBy: 'You'
-    };
-    
-    setSplitBills([newBill, ...splitBills]);
-    
-    // Reset form
-    setBillTitle('');
-    setTotalAmount('');
-    setParticipants([]);
-    
-    // Show success message
-    alert('Bill split created successfully!');
+  const createSplitBill = async () => {
+    if (!billTitle || !totalAmount || submitting) return;
+
+    const main = wallets.find((w) => w.type === 'main') ?? wallets[0];
+    if (!user || !main) {
+      setError('You need a wallet before you can create a split.');
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+    try {
+      // The backend keys participants by user and wallet UUID, so people
+      // invited here by name and email cannot be sent with the split — they are
+      // added once they have a Vaultiva account. The split is created with the
+      // current user as sender, which is what the mobile app does too.
+      await billSplitApi.create({
+        title: billTitle.trim(),
+        description: billTitle.trim(),
+        totalAmount: parseFloat(totalAmount),
+        type: 'one_to_many',
+        frequency: 'one_time',
+        walletId: main.id,
+        participants: [
+          {
+            userId: user.id,
+            walletId: main.id,
+            role: 'sender',
+            amount: parseFloat(totalAmount),
+          },
+        ],
+      });
+
+      setBillTitle('');
+      setTotalAmount('');
+      setParticipants([]);
+      setActiveTab('history');
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not create the split.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const markAsPaid = (billId: string, participantId: string) => {
-    setSplitBills(splitBills.map(bill => {
-      if (bill.id === billId) {
-        return {
-          ...bill,
-          participants: bill.participants.map(p => 
-            p.id === participantId ? { ...p, paid: true } : p
-          )
-        };
-      }
-      return bill;
-    }));
+  /**
+   * Settle a split.
+   *
+   * This used to flip a local `paid` flag, so the UI reported that someone had
+   * paid while no money had moved anywhere. Payment is the server's to confirm.
+   */
+  const markAsPaid = async (billId: string) => {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      await billSplitApi.execute(billId);
+      await load();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Could not settle the split.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -287,13 +344,19 @@ const BillSplitting: React.FC = () => {
           </div>
         )}
 
+        {error ? (
+          <p role="alert" className="mb-4 text-sm text-red-600 dark:text-red-400">
+            {error}
+          </p>
+        ) : null}
+
         <button
-          onClick={createSplitBill}
-          disabled={!billTitle || !totalAmount || participants.length === 0}
+          onClick={() => void createSplitBill()}
+          disabled={!billTitle || !totalAmount || submitting}
           className="w-full px-4 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2"
         >
           <Share2 className="w-5 h-5" />
-          <span>Create Split Bill</span>
+          <span>{submitting ? 'Creating…' : 'Create Split Bill'}</span>
         </button>
       </div>
     </motion.div>
@@ -301,6 +364,24 @@ const BillSplitting: React.FC = () => {
 
   const BillHistory = () => (
     <div className="space-y-6">
+      {loading ? (
+        <div className="flex justify-center py-16">
+          <div
+            className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"
+            role="status"
+            aria-label="Loading your splits"
+          />
+        </div>
+      ) : error ? (
+        <p role="alert" className="py-16 text-center text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      ) : splitBills.length === 0 ? (
+        <p className="py-16 text-center text-gray-600 dark:text-gray-400">
+          You haven&rsquo;t created any splits yet.
+        </p>
+      ) : null}
+
       {splitBills.map((bill, index) => (
         <motion.div
           key={bill.id}
@@ -368,7 +449,7 @@ const BillSplitting: React.FC = () => {
                   </div>
                   {!participant.paid && bill.status === 'active' && (
                     <button
-                      onClick={() => markAsPaid(bill.id, participant.id)}
+                      onClick={() => void markAsPaid(bill.id)}
                       className="px-3 py-1 text-xs bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                     >
                       Mark Paid

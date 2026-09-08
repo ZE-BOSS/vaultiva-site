@@ -49,7 +49,15 @@ export interface Wallet {
   name: string;
   balance: string | number;
   currency: string;
+  /**
+   * The real bank account behind the wallet, opened at Xpress. Absent until KYC
+   * supplies a BVN and date of birth — screens that show it must handle that,
+   * not substitute a placeholder.
+   */
   accountNumber?: string;
+  accountName?: string;
+  bankName?: string;
+  bankCode?: string;
   createdAt: string;
 }
 
