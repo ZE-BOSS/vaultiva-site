@@ -334,6 +334,45 @@ const Profile: React.FC = () => {
             </div>
           </motion.div>
 
+          {/* Identity Verification */}
+          {/*
+            The mobile app carries out real ID capture (expo-camera) and
+            submits it for manual review — there is no admin panel yet, so
+            submissions sit pending. Building that same capture-and-submit flow
+            for the browser (camera permissions, an upload path, a second
+            review queue) is real scope on its own, and is deliberately out of
+            this pass to keep the site moving. This card says so honestly
+            instead of silently omitting the feature or duplicating the
+            not-yet-existing mobile flow here.
+          */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700"
+          >
+            <div className="p-6 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+                  <Shield className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Identity Verification
+                  </h2>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    {user?.kycStatus === 'pending'
+                      ? 'Your ID is under review. We will let you know once it has been checked.'
+                      : 'Available in the Vaultiva mobile app. Coming soon on web.'}
+                  </p>
+                </div>
+              </div>
+              <span className="flex-shrink-0 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 dark:bg-gray-700 dark:text-gray-400">
+                {user?.kycStatus === 'pending' ? 'Pending' : 'Coming soon'}
+              </span>
+            </div>
+          </motion.div>
+
           {/* Security Settings */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

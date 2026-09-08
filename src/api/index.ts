@@ -238,6 +238,33 @@ export interface CodeIssued {
   delivered?: boolean;
 }
 
+// ── KYC (identity document submission) ──────────────────────────────────────
+
+/**
+ * There is no automated verification vendor wired up — a submission is stored
+ * and reviewed by an admin later. `status` starts and stays 'pending' until
+ * that review happens.
+ */
+export type KycDocumentType = 'nin_slip' | 'drivers_license' | 'voters_card' | 'passport';
+export type KycSubmissionStatus = 'pending' | 'approved' | 'rejected';
+
+export interface KycSubmission {
+  id: string;
+  documentType: KycDocumentType;
+  status: KycSubmissionStatus;
+  reviewNote: string | null;
+  createdAt: string;
+}
+
+export const kycApi = {
+  /** frontImage / backImage are base64 (no data: URI prefix). */
+  submit: (body: { documentType: KycDocumentType; frontImage: string; backImage?: string }) =>
+    api.post<{ status: KycSubmissionStatus; submittedAt: string }>('/kyc/submit', body),
+
+  status: () =>
+    api.get<{ kycStatus: KycStatus; submission: KycSubmission | null }>('/kyc/status'),
+};
+
 export const authApi = {
   register: (body: { email?: string; phone?: string }) =>
     api.post<CodeIssued>('/auth/register', body, { anonymous: true }),
