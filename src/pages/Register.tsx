@@ -15,6 +15,8 @@ type Step = 'contact' | 'code' | 'profile';
 
 export default function Register() {
   const [step, setStep] = useState<Step>('contact');
+  // True when the backend could not reach the email/SMS provider.
+  const [undelivered, setUndelivered] = useState(false);
   const [contact, setContact] = useState('');
   const [code, setCode] = useState('');
   const [firstName, setFirstName] = useState('');
@@ -46,7 +48,8 @@ export default function Register() {
     e.preventDefault();
     void guard(async () => {
       const sent = await register(contact);
-      setContact(sent);
+      setContact(sent.contact);
+      setUndelivered(!sent.delivered);
       setStep('code');
     });
   };
@@ -127,7 +130,11 @@ export default function Register() {
         <form onSubmit={submitCode} className="contents">
           <AuthShell
             title="6-digit code"
-            subtitle={`Code sent to ${contact}`}
+            subtitle={
+              undelivered
+                ? `We could not send a code to ${contact}.`
+                : `Code sent to ${contact}`
+            }
             footer={
               <Button type="submit" loading={loading} disabled={code.length < 6}>
                 Continue
@@ -147,14 +154,22 @@ export default function Register() {
               className="text-[16px] text-primary"
               onClick={() =>
                 void guard(async () => {
-                  await authApi.resendCode(
+                  const res = await authApi.resendCode(
                     contact.includes('@') ? { email: contact } : { phone: contact },
                   );
+                  setUndelivered(res.delivered === false);
                 })
               }
             >
               Re-send code
             </button>
+
+            {undelivered ? (
+              <p role="alert" className="mt-4 text-sm text-danger">
+                Sending failed — this is on our side, not yours. Tap “Re-send code”
+                to try again.
+              </p>
+            ) : null}
             {errorNode}
           </AuthShell>
         </form>

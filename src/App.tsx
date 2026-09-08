@@ -5,6 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { WalletProvider } from './contexts/WalletContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import Layout from './components/Layout';
+import RequireAuth from './components/RequireAuth';
 import Home from './pages/Home';
 import Dashboard from './pages/Dashboard';
 import Wallets from './pages/Wallets';
@@ -14,6 +15,8 @@ import Escrow from './pages/Escrow';
 import AIInsights from './pages/AIInsights';
 import Profile from './pages/Profile';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
+import NotFound from './pages/NotFound';
 import Register from './pages/Register';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/TermsAndConditions';
@@ -32,20 +35,23 @@ function App() {
                   <Routes>
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                     <Route path="/terms-and-conditions" element={<TermsAndConditions />} />
                     <Route path="/refund-policy" element={<RefundPolicy />} />
                     <Route path="/banking-instructions" element={<BankingInstructions />} />
                     <Route path="/" element={<Layout />}>
                       <Route index element={<Home />} />
-                      <Route path="dashboard" element={<Dashboard />} />
-                      <Route path="wallets" element={<Wallets />} />
-                      <Route path="bills" element={<BillPayment />} />
-                      <Route path="split" element={<BillSplitting />} />
-                      <Route path="escrow" element={<Escrow />} />
-                      <Route path="insights" element={<AIInsights />} />
-                      <Route path="profile" element={<Profile />} />
+                      <Route path="dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+                      <Route path="wallets" element={<RequireAuth><Wallets /></RequireAuth>} />
+                      <Route path="bills" element={<RequireAuth><BillPayment /></RequireAuth>} />
+                      <Route path="split" element={<RequireAuth><BillSplitting /></RequireAuth>} />
+                      <Route path="escrow" element={<RequireAuth><Escrow /></RequireAuth>} />
+                      <Route path="insights" element={<RequireAuth><AIInsights /></RequireAuth>} />
+                      <Route path="profile" element={<RequireAuth><Profile /></RequireAuth>} />
                     </Route>
+                    {/* Anything else rendered a blank page before this. */}
+                    <Route path="*" element={<NotFound />} />
                   </Routes>
                 </div>
               </Router>

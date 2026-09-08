@@ -218,12 +218,24 @@ export interface BillPaymentPayload {
 
 // ── Auth ─────────────────────────────────────────────────────────────────────
 
+/**
+ * `delivered` says whether the code actually left the building. The endpoints
+ * used to answer "Verification code sent" no matter what, so a provider failure
+ * looked exactly like a code still in flight — the user waited for something
+ * that was never coming.
+ */
+export interface CodeIssued {
+  message: string;
+  contact: string;
+  delivered?: boolean;
+}
+
 export const authApi = {
   register: (body: { email?: string; phone?: string }) =>
-    api.post<{ message: string; contact: string }>('/auth/register', body, { anonymous: true }),
+    api.post<CodeIssued>('/auth/register', body, { anonymous: true }),
 
   resendCode: (body: { email?: string; phone?: string }) =>
-    api.post<{ message: string; contact: string }>('/auth/resend-code', body, { anonymous: true }),
+    api.post<CodeIssued>('/auth/resend-code', body, { anonymous: true }),
 
   verifyCode: (contact: string, code: string) =>
     api.post<{ verified: boolean; userId: string; contact: string }>(
@@ -238,6 +250,11 @@ export const authApi = {
   login: (identifier: string, password: string) =>
     api.post<LoginResponse>('/auth/login', { identifier, password }, { anonymous: true }),
 
+  /**
+   * Deliberately does NOT report delivery. This endpoint must not reveal whether
+   * an account exists, and `delivered: false` would do exactly that — a provider
+   * outage is global, so a false here would mean "that address is registered".
+   */
   initiateResetPassword: (identifier: string) =>
     api.post<{ message: string }>('/auth/initiate-reset-password', { identifier }, { anonymous: true }),
 

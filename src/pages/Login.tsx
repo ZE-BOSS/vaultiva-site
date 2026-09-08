@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../api';
@@ -10,6 +10,12 @@ import SEOHead from '../components/SEOHead';
  * Matches the mobile sign-in screen (`vaultiva-mobile/assets/images/Sign in.png`):
  * "Welcome Back", filled fields, the forgot-password link left-aligned beneath
  * them, and the two pill actions at the bottom.
+ *
+ * One deliberate deviation: the design puts "Your new password must be different
+ * from previously used passwords" under the title. That is the Reset Password
+ * subtitle, pasted onto Sign In by mistake — it tells a returning user about a
+ * rule that does not apply to what they are doing. Mobile carried the same copy
+ * and has been changed to match.
  */
 export default function Login() {
   const [identifier, setIdentifier] = useState('');
@@ -20,6 +26,9 @@ export default function Login() {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Set by RequireAuth when it intercepts a deep link.
+  const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +37,7 @@ export default function Login() {
     setError(null);
     try {
       await login(identifier.trim(), password);
-      navigate('/dashboard');
+      navigate(from ?? '/dashboard', { replace: true });
     } catch (err) {
       setError(
         err instanceof ApiError ? err.message : 'Something went wrong. Please try again.',
@@ -47,7 +56,7 @@ export default function Login() {
       <form onSubmit={submit} className="contents">
         <AuthShell
           title="Welcome Back"
-          subtitle="Your new password must be different from previously used passwords."
+          subtitle="Sign in to continue to your Vaultiva account."
           footer={
             <>
               <Button type="submit" loading={loading} disabled={!canSubmit}>

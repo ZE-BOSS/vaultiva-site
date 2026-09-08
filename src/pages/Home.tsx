@@ -3,15 +3,15 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useInView } from 'react-intersection-observer';
 import {
-  // ShieldCheckIcon,
+  Award,
+  ClipboardIcon,
+  Lock,
+  ReceiptIcon,
+  ShieldCheckIcon,
+  SparklesIcon,
+  UserCheck,
   UsersIcon,
   WalletIcon,
-  ClockIcon,
-  ClipboardIcon,
-  LockKeyholeIcon,
-  // Lock,
-  UserCheck,
-  Award,
 } from 'lucide-react';
 import HomeIMG from '../assets/home.avif';
 import SplitBills from '../assets/splitbills.avif';
@@ -23,18 +23,37 @@ const Home: React.FC = () => {
   const [featuresRef, featuresInView] = useInView({ threshold: 0.1, triggerOnce: true });
   const [howItWorksRef, howItWorksInView] = useInView({ threshold: 0.1, triggerOnce: true });
 
+  /**
+   * Every service we actually offer, each linking to the page that provides it.
+   *
+   * Smart Escrow was commented out and Bill Payments was absent entirely, so the
+   * two headline features were invisible on the marketing page. The cards were
+   * also inert — no link — so a visitor had no route from "this looks useful" to
+   * using it. `to` now drives a real link; RequireAuth sends a signed-out
+   * visitor to /login and returns them here afterwards.
+   */
   const features = [
-    // {
-    //   title: "Smart Escrow",
-    //   description: "Hold funds securely until all parties meet their obligations.",
-    //   icon: ShieldCheckIcon,
-    //   gradient: "from-white to-[#fecaca] dark:from-gray-900 dark:to-red-900",
-    //   iconColor: "bg-red-400 dark:bg-red-600"
-    // },
+    {
+      title: "Bill Payments",
+      description: "Airtime, data, electricity and TV — paid in seconds from any wallet.",
+      icon: ReceiptIcon,
+      to: "/bills",
+      gradient: "from-white to-[#bae6fd] dark:from-gray-900 dark:to-sky-900",
+      iconColor: "bg-sky-400 dark:bg-sky-600"
+    },
+    {
+      title: "Smart Escrow",
+      description: "Hold funds securely until all parties meet their obligations.",
+      icon: ShieldCheckIcon,
+      to: "/escrow",
+      gradient: "from-white to-[#fecaca] dark:from-gray-900 dark:to-red-900",
+      iconColor: "bg-red-400 dark:bg-red-600"
+    },
     {
       title: "Split Payments",
       description: "Easily split bills between friends and track contributions.",
       icon: UsersIcon,
+      to: "/split",
       gradient: "from-white to-[#bfdbfe] dark:from-gray-900 dark:to-blue-900",
       iconColor: "bg-blue-400 dark:bg-blue-600"
     },
@@ -42,13 +61,15 @@ const Home: React.FC = () => {
       title: "Multi-Wallets",
       description: "Organize your finances across different goals and wallets.",
       icon: WalletIcon,
+      to: "/wallets",
       gradient: "from-white to-[#fed7aa] dark:from-gray-900 dark:to-orange-900",
       iconColor: "bg-orange-400 dark:bg-orange-600"
     },
     {
-      title: "Schedule Payments",
-      description: "Never miss a payment. Set it and forget it.",
-      icon: ClockIcon,
+      title: "AI Insights",
+      description: "See where your money goes, with recommendations that adapt to you.",
+      icon: SparklesIcon,
+      to: "/insights",
       gradient: "from-white to-[#e9d5ff] dark:from-gray-900 dark:to-purple-900",
       iconColor: "bg-purple-400 dark:bg-purple-600"
     },
@@ -56,15 +77,9 @@ const Home: React.FC = () => {
       title: "Activity Logs",
       description: "Track every transaction with detailed logs and filters.",
       icon: ClipboardIcon,
+      to: "/dashboard",
       gradient: "from-white to-[#fef9c3] dark:from-gray-900 dark:to-yellow-900",
       iconColor: "bg-yellow-400 dark:bg-yellow-600"
-    },
-    {
-      title: "Secure Login",
-      description: "Login with multi-factor authentication and biometrics.",
-      icon: LockKeyholeIcon,
-      gradient: "from-white to-[#bbf7d0] dark:from-gray-900 dark:to-green-900",
-      iconColor: "bg-green-400 dark:bg-green-600"
     },
   ];
 
@@ -76,12 +91,12 @@ const Home: React.FC = () => {
       description: 'Create your account in minutes with secure verification and start managing your finances immediately.',
       color: 'from-blue-500 to-indigo-600'
     },
-    // {
-    //   icon: Lock,
-    //   title: 'Pay Bills & Set Escrow',
-    //   description: 'Pay your bills instantly or set up secure escrow transactions for safe online purchases and services.',
-    //   color: 'from-purple-500 to-pink-500'
-    // },
+    {
+      icon: Lock,
+      title: 'Pay Bills & Set Escrow',
+      description: 'Pay your bills instantly or set up secure escrow transactions for safe online purchases and services.',
+      color: 'from-purple-500 to-pink-500'
+    },
     {
       icon: Award,
       title: 'Relax & Earn',
@@ -267,7 +282,11 @@ const Home: React.FC = () => {
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                   className="group"
                 >
-                  <div className={`rounded-3xl p-8 bg-gradient-to-br ${gradient} shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-[#e5e7eb] dark:border-[#1f2b46] h-full`}>
+                  <Link
+                    to={feature.to}
+                    aria-label={`${feature.title} — ${feature.description}`}
+                    className={`block rounded-3xl p-8 bg-gradient-to-br ${gradient} shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-[#e5e7eb] dark:border-[#1f2b46] h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2`}
+                  >
                     <div className={`w-16 h-16 ${iconBg} rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
                       <Icon className="w-8 h-8 text-white" />
                     </div>
@@ -278,7 +297,7 @@ const Home: React.FC = () => {
                     <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed">
                       {feature.description}
                     </p>
-                  </div>
+                  </Link>
                 </motion.div>
               );
             })}
@@ -511,7 +530,7 @@ const Home: React.FC = () => {
               <ul className="space-y-2">
                 <li><Link to="/bills" className="text-gray-400 hover:text-white transition-colors">Pay Bills</Link></li>
                 <li><Link to="/split" className="text-gray-400 hover:text-white transition-colors">Split Bills</Link></li>
-                {/* <li><Link to="/escrow" className="text-gray-400 hover:text-white transition-colors">Escrow</Link></li> */}
+                <li><Link to="/escrow" className="text-gray-400 hover:text-white transition-colors">Escrow</Link></li>
                 <li><Link to="/insights" className="text-gray-400 hover:text-white transition-colors">AI Insights</Link></li>
               </ul>
             </div>

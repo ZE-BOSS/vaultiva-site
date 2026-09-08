@@ -19,7 +19,7 @@ interface AuthContextType {
   initialising: boolean;
   isAuthenticated: boolean;
   login: (identifier: string, password: string) => Promise<void>;
-  register: (contact: string) => Promise<string>;
+  register: (contact: string) => Promise<{ contact: string; delivered: boolean }>;
   completeProfile: (contact: string, data: Record<string, unknown>) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -95,13 +95,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     [persist],
   );
 
-  /** Step one of signup — returns the contact the verification code went to. */
+  /**
+   * Step one of signup. Returns the contact the code was addressed to, and
+   * whether it was actually delivered — a provider failure still returns 201,
+   * because the code is stored and can be resent.
+   */
   const register = useCallback(async (contact: string) => {
     const trimmed = contact.trim();
     const res = await authApi.register(
       trimmed.includes('@') ? { email: trimmed } : { phone: trimmed },
     );
-    return res.contact;
+    return { contact: res.contact, delivered: res.delivered !== false };
   }, []);
 
   const completeProfile = useCallback(
