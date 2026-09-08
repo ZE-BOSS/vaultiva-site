@@ -14,10 +14,21 @@
  */
 const PRODUCTION_API = 'https://d3p6prbw9fx10y.cloudfront.net/api/v1';
 
+/**
+ * `||`, not `??`. A Vercel project with VITE_API_URL defined but *empty* yields
+ * an empty string, which `??` happily accepts — every request then resolves
+ * against the site's own origin and 404s. Only a non-blank value should win.
+ */
+const envApiUrl = import.meta.env.VITE_API_URL?.trim();
+
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_URL ??
-  (import.meta.env.PROD ? PRODUCTION_API : 'http://localhost:3000/api/v1')
+  envApiUrl || (import.meta.env.PROD ? PRODUCTION_API : 'http://localhost:3000/api/v1')
 ).replace(/\/$/, '');
+
+if (!API_BASE_URL) {
+  // Never silently fall back to relative URLs.
+  throw new Error('Vaultiva: API_BASE_URL resolved to an empty string. Check VITE_API_URL.');
+}
 
 /** Shape produced by the backend's ResponseInterceptor. */
 interface Envelope<T> {
