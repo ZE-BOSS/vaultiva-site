@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { 
   CreditCard, 
   Building2, 
@@ -7,25 +8,14 @@ import {
   Shield, 
   CheckCircle, 
   AlertTriangle,
-  Copy,
   Download,
   Upload,
-  Info,
   DollarSign,
   Smartphone,
   Globe, Mail } from 'lucide-react';
 
 const BankingInstructions: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'deposit' | 'withdraw'>('deposit');
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-
-  const bankDetails = {
-    accountName: 'Vaultivas Technologies Limited',
-    accountNumber: '0123456789',
-    bankName: 'First Bank of Nigeria',
-    sortCode: '011-152-003',
-    swiftCode: 'FBNGNGLA'
-  };
 
   const supportedBanks = [
     { name: 'First Bank of Nigeria', code: 'FBN', transferTime: '5-10 minutes', fee: '₦25' },
@@ -89,11 +79,6 @@ const BankingInstructions: React.FC = () => {
     }
   ];
 
-  const copyToClipboard = (text: string, field: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
 
   const DepositInstructions = () => (
     <div className="space-y-8">
@@ -108,106 +93,42 @@ const BankingInstructions: React.FC = () => {
           Bank Account Details
         </h3>
         
-        <div className="grid md:grid-cols-2 gap-4">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Account Name</p>
-                <p className="font-semibold text-gray-900 dark:text-white">{bankDetails.accountName}</p>
-              </div>
-              <button
-                onClick={() => copyToClipboard(bankDetails.accountName, 'accountName')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {copiedField === 'accountName' ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Account Number</p>
-                <p className="font-semibold text-gray-900 dark:text-white font-mono">{bankDetails.accountNumber}</p>
-              </div>
-              <button
-                onClick={() => copyToClipboard(bankDetails.accountNumber, 'accountNumber')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {copiedField === 'accountNumber' ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Bank Name</p>
-                <p className="font-semibold text-gray-900 dark:text-white">{bankDetails.bankName}</p>
-              </div>
-              <button
-                onClick={() => copyToClipboard(bankDetails.bankName, 'bankName')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {copiedField === 'bankName' ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-            </div>
+        <div className="space-y-4">
+          {/*
+            This page is public, and it used to print a company account here —
+            "Vaultivas Technologies Limited", account 0123456789 at First Bank,
+            with a sort code and a SWIFT code. All of it was invented, and the
+            page instructed anyone reading to transfer money to it.
+
+            Funding does not work that way: each user funds their own wallet
+            account, opened in their name once KYC is complete. There is no
+            shared account to publish, so the page explains the flow instead.
+          */}
+          <div className="p-4 bg-white dark:bg-gray-800 rounded-lg">
+            <p className="text-gray-700 dark:text-gray-300">
+              Every Vaultiva wallet gets its own Nigerian bank account, in your
+              name. Money you transfer to it lands in your wallet automatically —
+              there is no shared account to pay into.
+            </p>
+            <p className="mt-3 text-gray-700 dark:text-gray-300">
+              Your account number appears on your dashboard once your identity is
+              verified. Verification needs your BVN and date of birth.
+            </p>
           </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Sort Code</p>
-                <p className="font-semibold text-gray-900 dark:text-white font-mono">{bankDetails.sortCode}</p>
-              </div>
-              <button
-                onClick={() => copyToClipboard(bankDetails.sortCode, 'sortCode')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {copiedField === 'sortCode' ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-            </div>
-            
-            <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">SWIFT Code</p>
-                <p className="font-semibold text-gray-900 dark:text-white font-mono">{bankDetails.swiftCode}</p>
-              </div>
-              <button
-                onClick={() => copyToClipboard(bankDetails.swiftCode, 'swiftCode')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                {copiedField === 'swiftCode' ? (
-                  <CheckCircle className="w-4 h-4 text-green-600" />
-                ) : (
-                  <Copy className="w-4 h-4 text-gray-500" />
-                )}
-              </button>
-            </div>
-            
-            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
-              <div className="flex items-start space-x-2">
-                <Info className="w-4 h-4 text-yellow-600 mt-0.5" />
-                <div>
-                  <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Important</p>
-                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
-                    Always include your Vaultivas username in the transfer reference
-                  </p>
-                </div>
-              </div>
-            </div>
+
+          <div className="flex flex-wrap gap-3">
+            <Link
+              to="/dashboard"
+              className="rounded-full bg-blue-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-blue-700"
+            >
+              See my account number
+            </Link>
+            <Link
+              to="/register"
+              className="rounded-full border border-gray-300 px-6 py-3 font-semibold text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800"
+            >
+              Create an account
+            </Link>
           </div>
         </div>
       </motion.div>

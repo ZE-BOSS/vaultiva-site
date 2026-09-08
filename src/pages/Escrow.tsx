@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Shield, 
@@ -57,80 +57,47 @@ const Escrow: React.FC = () => {
   const [selectedWallet, setSelectedWallet] = useState('');
   const [createError, setCreateError] = useState<string | null>(null);
 
-  const [escrowTransactions, setEscrowTransactions] = useState<EscrowTransaction[]>([
-    {
-      id: '1',
-      title: 'Laptop Purchase',
-      description: 'MacBook Pro 16" M2 - Brand new, sealed box',
-      amount: 1200000,
-      buyer: 'You',
-      seller: 'TechStore Lagos',
-      status: 'funded',
-      createdAt: new Date('2024-01-12'),
-      milestones: [
-        {
-          id: '1',
-          title: 'Payment Confirmation',
-          description: 'Buyer funds escrow account',
-          amount: 1200000,
-          status: 'completed',
-          completedAt: new Date('2024-01-12')
-        },
-        {
-          id: '2',
-          title: 'Item Delivery',
-          description: 'Seller ships the laptop',
-          amount: 0,
-          status: 'pending'
-        }
-      ],
-      messages: [
-        {
-          id: '1',
-          sender: 'system',
-          message: 'Escrow transaction created and funded',
-          timestamp: new Date('2024-01-12'),
-          type: 'system'
-        },
-        {
-          id: '2',
-          sender: 'TechStore Lagos',
-          message: 'Thank you for your purchase. We will ship the laptop within 24 hours.',
-          timestamp: new Date('2024-01-12'),
-          type: 'message'
-        }
-      ]
-    },
-    {
-      id: '2',
-      title: 'Freelance Web Design',
-      description: 'Complete website redesign for e-commerce store',
-      amount: 350000,
-      buyer: 'StartupCorp',
-      seller: 'You',
-      status: 'completed',
-      createdAt: new Date('2024-01-05'),
-      milestones: [
-        {
-          id: '1',
-          title: 'Initial Design',
-          description: 'Wireframes and mockups',
-          amount: 175000,
-          status: 'completed',
-          completedAt: new Date('2024-01-08')
-        },
-        {
-          id: '2',
-          title: 'Development & Launch',
-          description: 'Full website development and deployment',
-          amount: 175000,
-          status: 'completed',
-          completedAt: new Date('2024-01-15')
-        }
-      ],
-      messages: []
+  /**
+   * Real escrows, from the API.
+   *
+   * This was seeded with an invented ₦1,200,000 "Laptop Purchase" from
+   * "TechStore Lagos", so every signed-in user saw an escrow they had never
+   * created, holding money that was not theirs. Created escrows were also only
+   * appended to this array, so the list never reflected what the server held.
+   */
+  const [escrowTransactions, setEscrowTransactions] = useState<EscrowTransaction[]>([]);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState<string | null>(null);
+
+  const loadEscrows = useCallback(async () => {
+    setListLoading(true);
+    setListError(null);
+    try {
+      const rows = await escrowApi.list();
+      setEscrowTransactions(
+        rows.map((e) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description ?? '',
+          amount: Number(e.amount ?? 0),
+          buyer: 'You',
+          seller: '—',
+          status: (e.status as EscrowTransaction['status']) ?? 'pending',
+          createdAt: new Date(e.createdAt),
+          milestones: [],
+          messages: [],
+        })),
+      );
+    } catch (err) {
+      setListError(err instanceof ApiError ? err.message : 'Could not load your escrows.');
+    } finally {
+      setListLoading(false);
     }
-  ]);
+  }, []);
+
+  useEffect(() => {
+    void loadEscrows();
+  }, [loadEscrows]);
 
   // Balances arrive from the API as Postgres numerics (strings); coerce here so
   // every call site does not have to.
@@ -168,44 +135,7 @@ const Escrow: React.FC = () => {
     
     if (!title || !description || !amount || !sellerEmail || !selectedWallet) return;
 
-    const newEscrow: EscrowTransaction = {
-      id: Date.now().toString(),
-      title,
-      description,
-      amount: parseFloat(amount),
-      buyer: 'You',
-      seller: sellerEmail,
-      status: 'funded',
-      createdAt: new Date(),
-      milestones: [
-        {
-          id: '1',
-          title: 'Payment Confirmation',
-          description: 'Buyer funds escrow account',
-          amount: parseFloat(amount),
-          status: 'completed',
-          completedAt: new Date()
-        },
-        {
-          id: '2',
-          title: 'Delivery Confirmation',
-          description: 'Seller delivers goods/services',
-          amount: 0,
-          status: 'pending'
-        }
-      ],
-      messages: [
-        {
-          id: '1',
-          sender: 'system',
-          message: 'Escrow transaction created and funded',
-          timestamp: new Date(),
-          type: 'system'
-        }
-      ]
-    };
 
-    setEscrowTransactions([newEscrow, ...escrowTransactions]);
 
     // Create and fund the escrow server-side. This previously only pushed a
     // local object and a fabricated debit, so nothing was actually held.
@@ -226,6 +156,7 @@ const Escrow: React.FC = () => {
         metadata: { sellerEmail, walletId: selectedWallet },
       });
       await refresh();
+      await loadEscrows();
     } catch (err) {
       setCreateError(err instanceof ApiError ? err.message : 'That escrow could not be created.');
       return;
@@ -527,8 +458,24 @@ const Escrow: React.FC = () => {
         {/* Content */}
         <div className="max-w-4xl mx-auto">
           {activeTab === 'create' && <CreateEscrowForm />}
-          {activeTab === 'active' && <TransactionList transactions={activeTransactions} />}
-          {activeTab === 'history' && <TransactionList transactions={completedTransactions} />}
+          {activeTab !== 'create' && listLoading ? (
+            <div className="flex justify-center py-16">
+              <div
+                className="h-8 w-8 animate-spin rounded-full border-2 border-purple-600 border-t-transparent"
+                role="status"
+                aria-label="Loading your escrows"
+              />
+            </div>
+          ) : activeTab !== 'create' && listError ? (
+            <p role="alert" className="py-16 text-center text-red-600 dark:text-red-400">
+              {listError}
+            </p>
+          ) : (
+            <>
+              {activeTab === 'active' && <TransactionList transactions={activeTransactions} />}
+              {activeTab === 'history' && <TransactionList transactions={completedTransactions} />}
+            </>
+          )}
         </div>
       </div>
     </div>

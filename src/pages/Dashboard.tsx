@@ -55,13 +55,26 @@ const Dashboard: React.FC = () => {
   const recentTransactions = transactions.slice(0, 5);
   const totalBalance = getTotalBalance();
 
-  // Bank details for deposits
-  const bankDetails = {
-    accountName: 'Vaultivas Technologies Limited',
-    accountNumber: '0123456789',
-    bankName: 'First Bank of Nigeria',
-    sortCode: '011-152-003'
-  };
+  /**
+   * The account the user funds their wallet from.
+   *
+   * This was a hardcoded literal — account 0123456789 at "First Bank of
+   * Nigeria", with a UK-style sort code that Nigerian banking does not use. The
+   * deposit modal told people to transfer real money to it. Nothing would have
+   * arrived, because the account is not theirs and does not exist.
+   *
+   * It is the wallet's own account, opened at Xpress, and it exists only after
+   * KYC supplies a BVN and date of birth. When it is missing the modal says so
+   * rather than inventing a number.
+   */
+  const mainWallet = wallets.find((w) => w.type === 'main') ?? wallets[0];
+  const bankDetails = mainWallet?.accountNumber
+    ? {
+        accountName: mainWallet.accountName ?? user?.firstName ?? 'Your Vaultiva account',
+        accountNumber: mainWallet.accountNumber,
+        bankName: mainWallet.bankName ?? 'Vaultiva partner bank',
+      }
+    : null;
 
   const quickActions = [
     {
@@ -78,13 +91,13 @@ const Dashboard: React.FC = () => {
       color: 'from-green-500 to-emerald-500',
       link: '/split'
     },
-    // {
-    //   icon: Shield,
-    //   title: 'Escrow',
-    //   description: 'Secure transactions',
-    //   color: 'from-purple-500 to-pink-500',
-    //   link: '/escrow'
-    // },
+    {
+      icon: Shield,
+      title: 'Escrow',
+      description: 'Secure transactions',
+      color: 'from-purple-500 to-pink-500',
+      link: '/escrow'
+    },
     {
       icon: TrendingUp,
       title: 'AI Insights',
@@ -485,6 +498,7 @@ const Dashboard: React.FC = () => {
                   </h3>
                   
                   {/* Bank Account Details */}
+                  {bankDetails ? (
                   <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-6 mb-6">
                     <h4 className="font-bold text-gray-900 dark:text-white mb-4">
                       Transfer to this account:
@@ -545,25 +559,18 @@ const Dashboard: React.FC = () => {
                           </button>
                         </div>
                         
-                        <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg">
-                          <div>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Sort Code</p>
-                            <p className="font-semibold text-gray-900 dark:text-white font-mono">{bankDetails.sortCode}</p>
-                          </div>
-                          <button
-                            onClick={() => copyToClipboard(bankDetails.sortCode, 'sortCode')}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                          >
-                            {copiedField === 'sortCode' ? (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            ) : (
-                              <Copy className="w-4 h-4 text-gray-500" />
-                            )}
-                          </button>
-                        </div>
                       </div>
                     </div>
                   </div>
+                  ) : (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-6 mb-6">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                        Your account number isn&rsquo;t ready yet. We open a real bank
+                        account for your wallet once your identity is verified — that
+                        needs your BVN and date of birth.
+                      </p>
+                    </div>
+                  )}
 
                   {/* Instructions */}
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-4 mb-6">

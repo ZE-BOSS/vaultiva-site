@@ -1,88 +1,164 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Brain, 
   TrendingUp, 
   AlertTriangle, 
-  Lightbulb,
   Target,
   Calendar,
   DollarSign,
   Zap
 } from 'lucide-react';
+import { walletApi, ApiError, type Transaction } from '../api';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 const AIInsights: React.FC = () => {
-  // NOTE: this page still renders hard-coded insight data. It should read from
-  // insightsApi (/ai-insights/insights and /recommendations) — see HANDOVER.md.
+  /**
+   * Spending, computed from the account's own transactions.
+   *
+   * Every figure on this page used to be a literal: ₦45,000 on bills, a four
+   * month history ending in January, a "High Spending Alert" telling the user
+   * their spending was 23% higher than last month. None of it came from the
+   * account, so the page presented invented finances as analysis — and gave
+   * advice based on them.
+   *
+   * The charts below are derived from real transactions. Where there is no
+   * history yet, they are empty rather than filled in.
+   */
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock AI insights data
-  const spendingByCategory = [
-    { name: 'Bills', value: 45000, color: '#3B82F6' },
-    { name: 'Split', value: 25000, color: '#10B981' },
-    { name: 'Escrow', value: 100000, color: '#8B5CF6' },
-    { name: 'Transfer', value: 15000, color: '#F59E0B' }
-  ];
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      try {
+        const rows = await walletApi.transactions();
+        if (!cancelled) setTransactions(rows);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : 'Could not load your activity.');
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const monthlySpending = [
-    { month: 'Oct', amount: 120000 },
-    { month: 'Nov', amount: 95000 },
-    { month: 'Dec', amount: 140000 },
-    { month: 'Jan', amount: 185000 }
-  ];
+  const CATEGORY_COLORS = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#14B8A6'];
 
-  const spendingTrend = [
-    { day: 'Mon', amount: 15000 },
-    { day: 'Tue', amount: 8000 },
-    { day: 'Wed', amount: 25000 },
-    { day: 'Thu', amount: 12000 },
-    { day: 'Fri', amount: 35000 },
-    { day: 'Sat', amount: 20000 },
-    { day: 'Sun', amount: 5000 }
-  ];
-
-  const insights = [
-    {
-      id: 1,
-      type: 'warning',
-      icon: AlertTriangle,
-      title: 'High Spending Alert',
-      description: 'Your spending this month is 23% higher than last month. Consider reviewing your expenses.',
-      color: 'from-red-500 to-orange-500',
-      bgColor: 'bg-red-50 dark:bg-red-900/50',
-      textColor: 'text-red-700 dark:text-red-300'
-    },
-    {
-      id: 2,
-      type: 'tip',
-      icon: Lightbulb,
-      title: 'Auto-Refill Recommendation',
-      description: 'Based on your airtime usage, we recommend setting up auto-refill for ₦5,000 weekly.',
-      color: 'from-yellow-500 to-orange-500',
-      bgColor: 'bg-yellow-50 dark:bg-yellow-900/50',
-      textColor: 'text-yellow-700 dark:text-yellow-300'
-    },
-    {
-      id: 3,
-      type: 'success',
-      icon: Target,
-      title: 'Savings Goal Progress',
-      description: 'Great job! You\'re 67% towards your monthly savings goal. Keep it up!',
-      color: 'from-green-500 to-emerald-500',
-      bgColor: 'bg-green-50 dark:bg-green-900/50',
-      textColor: 'text-green-700 dark:text-green-300'
-    },
-    {
-      id: 4,
-      type: 'info',
-      icon: TrendingUp,
-      title: 'Bill Payment Pattern',
-      description: 'You typically spend more on bills during the first week of the month. Plan accordingly.',
-      color: 'from-blue-500 to-cyan-500',
-      bgColor: 'bg-blue-50 dark:bg-blue-900/50',
-      textColor: 'text-blue-700 dark:text-blue-300'
+  const spendingByCategory = useMemo(() => {
+    const totals = new Map<string, number>();
+    for (const t of transactions) {
+      const key = (t.type || 'other').replace(/_/g, ' ');
+      totals.set(key, (totals.get(key) ?? 0) + Number(t.amount ?? 0));
     }
-  ];
+    return [...totals.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, value], i) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value,
+        color: CATEGORY_COLORS[i % CATEGORY_COLORS.length],
+      }));
+  }, [transactions]);
+
+  const monthlySpending = useMemo(() => {
+    const months = new Map<string, number>();
+    for (const t of transactions) {
+      const d = new Date(t.createdAt);
+      const key = d.toLocaleString('en-NG', { month: 'short', year: '2-digit' });
+      months.set(key, (months.get(key) ?? 0) + Number(t.amount ?? 0));
+    }
+    return [...months.entries()].slice(-6).map(([month, amount]) => ({ month, amount }));
+  }, [transactions]);
+
+  const spendingTrend = useMemo(() => {
+    // The last seven days, including days with no activity.
+    const days: { day: string; amount: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setHours(0, 0, 0, 0);
+      d.setDate(d.getDate() - i);
+      const next = new Date(d);
+      next.setDate(next.getDate() + 1);
+      const amount = transactions
+        .filter((t) => {
+          const at = new Date(t.createdAt);
+          return at >= d && at < next;
+        })
+        .reduce((sum, t) => sum + Number(t.amount ?? 0), 0);
+      days.push({ day: d.toLocaleDateString('en-NG', { weekday: 'short' }), amount });
+    }
+    return days;
+  }, [transactions]);
+
+  /**
+   * Observations, not advice.
+   *
+   * The previous list was four hardcoded recommendations — an auto-refill
+   * amount, a savings-goal percentage — none of which were derived from
+   * anything. These describe only what the transactions actually show, and the
+   * list is empty until there is enough history to say something true.
+   */
+  const insights = useMemo(() => {
+    const out: Array<{
+      id: number;
+      type: string;
+      icon: typeof TrendingUp;
+      title: string;
+      description: string;
+      color: string;
+      bgColor: string;
+      textColor: string;
+    }> = [];
+
+    if (monthlySpending.length >= 2) {
+      const previous = monthlySpending[monthlySpending.length - 2].amount;
+      const current = monthlySpending[monthlySpending.length - 1].amount;
+      if (previous > 0) {
+        const change = Math.round(((current - previous) / previous) * 100);
+        if (Math.abs(change) >= 10) {
+          const up = change > 0;
+          out.push({
+            id: 1,
+            type: up ? 'warning' : 'success',
+            icon: up ? AlertTriangle : Target,
+            title: up ? 'Spending is up' : 'Spending is down',
+            description: `You have moved ${Math.abs(change)}% ${
+              up ? 'more' : 'less'
+            } this month than last.`,
+            color: up ? 'from-red-500 to-orange-500' : 'from-green-500 to-emerald-500',
+            bgColor: up ? 'bg-red-50 dark:bg-red-900/50' : 'bg-green-50 dark:bg-green-900/50',
+            textColor: up
+              ? 'text-red-700 dark:text-red-300'
+              : 'text-green-700 dark:text-green-300',
+          });
+        }
+      }
+    }
+
+    const top = spendingByCategory[0];
+    const total = spendingByCategory.reduce((sum, c) => sum + c.value, 0);
+    if (top && total > 0) {
+      out.push({
+        id: 2,
+        type: 'info',
+        icon: TrendingUp,
+        title: `Most of your activity is ${top.name.toLowerCase()}`,
+        description: `${top.name} accounts for ${Math.round(
+          (top.value / total) * 100,
+        )}% of what has moved through your wallets.`,
+        color: 'from-blue-500 to-cyan-500',
+        bgColor: 'bg-blue-50 dark:bg-blue-900/50',
+        textColor: 'text-blue-700 dark:text-blue-300',
+      });
+    }
+
+    return out;
+  }, [monthlySpending, spendingByCategory]);
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-NG', {
@@ -94,6 +170,28 @@ const AIInsights: React.FC = () => {
 
   const totalSpending = spendingByCategory.reduce((sum, item) => sum + item.value, 0);
   const avgDailySpending = spendingTrend.reduce((sum, item) => sum + item.amount, 0) / spendingTrend.length;
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div
+          className="h-8 w-8 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"
+          role="status"
+          aria-label="Loading your insights"
+        />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6 dark:bg-gray-900">
+        <p role="alert" className="text-center text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
