@@ -90,11 +90,20 @@ const Home: React.FC = () => {
     }
   ];
 
+  /**
+   * These were '500K+ Active Users', '₦50B+ Transactions Processed', '99.9%
+   * Uptime' and '24/7 Customer Support'. None of it was true — the product has
+   * not launched. Publishing invented volume figures on a financial services
+   * site is a consumer-protection problem in its own right, and on a domain
+   * registered days ago it reads to Google Safe Browsing's classifier exactly
+   * like a scam, which is the likeliest reason the site was flagged
+   * "Dangerous". Replaced with capabilities that are actually shipped.
+   */
   const stats = [
-    { number: '500K+', label: 'Active Users' },
-    { number: '₦50B+', label: 'Transactions Processed' },
-    { number: '99.9%', label: 'Uptime' },
-    { number: '24/7', label: 'Customer Support' }
+    { number: 'Escrow', label: 'Funds held until both sides confirm' },
+    { number: 'Split', label: 'Share a bill with friends' },
+    { number: 'Auto-refill', label: 'Never miss a recurring payment' },
+    { number: 'Multi-wallet', label: 'A wallet for each purpose' }
   ];
 
   return (
@@ -136,11 +145,12 @@ const Home: React.FC = () => {
               {/* Download Buttons */}
               <div className="flex flex-row gap-4 pt-4">
                 {/* App Store Button */}
-                <a
-                  href="#"
-                  className="inline-flex items-center px-4 py-2 rounded-lg shadow-md border transition-all duration-300
-                            bg-white text-black border-gray-200 hover:bg-gray-100
-                            dark:bg-black dark:text-white dark:border-white/20 dark:hover:bg-gray-900"
+                <span
+                  aria-disabled="true"
+                  title="Coming soon to the App Store"
+                  className="inline-flex items-center px-4 py-2 rounded-lg shadow-md border cursor-default opacity-70
+                            bg-white text-black border-gray-200
+                            dark:bg-black dark:text-white dark:border-white/20"
                 >
                   <img
                     src="data:image/png;base64,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"
@@ -153,17 +163,18 @@ const Home: React.FC = () => {
                     className="w-6 h-6 mr-3 hidden dark:block"
                   />
                   <div className="text-left leading-tight text-sm">
-                    <span className="block text-gray-600 text-xs dark:text-white/60">Download on the</span>
+                    <span className="block text-gray-600 text-xs dark:text-white/60">Coming soon to the</span>
                     <span className="font-semibold">App Store</span>
                   </div>
-                </a>
+                </span>
 
                 {/* Google Play Button */}
-                <a
-                  href="#"
-                  className="inline-flex items-center px-4 py-2 rounded-lg shadow-md border transition-all duration-300
-                            bg-white text-black border-gray-200 hover:bg-gray-100
-                            dark:bg-black dark:text-white dark:border-white/20 dark:hover:bg-gray-900"
+                <span
+                  aria-disabled="true"
+                  title="Coming soon to Google Play"
+                  className="inline-flex items-center px-4 py-2 rounded-lg shadow-md border cursor-default opacity-70
+                            bg-white text-black border-gray-200
+                            dark:bg-black dark:text-white dark:border-white/20"
                 >
                   <img
                     src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d0/Google_Play_Arrow_logo.svg/512px-Google_Play_Arrow_logo.svg.png"
@@ -171,10 +182,10 @@ const Home: React.FC = () => {
                     className="w-6 h-6 mr-3"
                   />
                   <div className="text-left leading-tight text-sm">
-                    <span className="block text-gray-600 text-xs dark:text-white/60">GET IT ON</span>
+                    <span className="block text-gray-600 text-xs dark:text-white/60">COMING SOON TO</span>
                     <span className="font-semibold">Google Play</span>
                   </div>
-                </a>
+                </span>
               </div>
 
 
@@ -188,10 +199,10 @@ const Home: React.FC = () => {
                     transition={{ duration: 0.6, delay: 0.8 + index * 0.1 }}
                     className="text-center"
                   >
-                    <div className="text-2xl md:text-3xl font-bold text-cyan-300">
+                    <div className="text-xl md:text-2xl font-bold text-cyan-300">
                       {stat.number}
                     </div>
-                    <div className="text-sm text-blue-200">
+                    <div className="text-xs md:text-sm text-blue-200">
                       {stat.label}
                     </div>
                   </motion.div>
@@ -508,10 +519,6 @@ const Home: React.FC = () => {
             <div>
               <h3 className="text-lg font-semibold mb-4">Company</h3>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">About Us</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Press</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Blog</a></li>
                 <li><Link to="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">Privacy Policy</Link></li>
                 <li><Link to="/terms-and-conditions" className="text-gray-400 hover:text-white transition-colors">Terms & Conditions</Link></li>
                 <li><Link to="/refund-policy" className="text-gray-400 hover:text-white transition-colors">Refund Policy</Link></li>
@@ -533,21 +540,6 @@ const Home: React.FC = () => {
               © 2024 Vaultivas. All rights reserved.
             </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Twitter">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
-                </svg>
-              </a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors" aria-label="LinkedIn">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-                </svg>
-              </a>
             </div>
           </div>
         </div>

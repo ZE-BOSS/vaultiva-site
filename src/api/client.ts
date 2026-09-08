@@ -111,7 +111,10 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     const message = Array.isArray(raw)
       ? raw.join('\n')
       : raw || `Request failed (${response.status})`;
-    if (response.status === 401) onUnauthorized?.();
+    // Only an authenticated 401 means the session died. A failed sign-in also
+    // returns 401, and firing the session-expiry hook there would sign the user
+    // out of a session they never had.
+    if (response.status === 401 && !anonymous) onUnauthorized?.();
     throw new ApiError(response.status, message, errBody);
   }
 
